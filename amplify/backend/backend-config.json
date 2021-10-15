@@ -1,0 +1,15 @@
+{
+	"auth": {
+		"copbayerappgetx7172d21a": {
+			"service": "Cognito",
+			"providerPlugin": "awscloudformation",
+			"dependsOn": []
+		}
+	},
+	"storage": {
+		"copbayer": {
+			"service": "S3",
+			"providerPlugin": "awscloudformation"
+		}
+	}
+}

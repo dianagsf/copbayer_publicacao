@@ -1,0 +1,38 @@
+{
+    "dev": {
+        "awscloudformation": {
+            "AuthRoleName": "amplify-copbayerappgetx-dev-180238-authRole",
+            "UnauthRoleArn": "arn:aws:iam::641333919050:role/amplify-copbayerappgetx-dev-180238-unauthRole",
+            "AuthRoleArn": "arn:aws:iam::641333919050:role/amplify-copbayerappgetx-dev-180238-authRole",
+            "Region": "us-east-1",
+            "DeploymentBucketName": "amplify-copbayerappgetx-dev-180238-deployment",
+            "UnauthRoleName": "amplify-copbayerappgetx-dev-180238-unauthRole",
+            "StackName": "amplify-copbayerappgetx-dev-180238",
+            "StackId": "arn:aws:cloudformation:us-east-1:641333919050:stack/amplify-copbayerappgetx-dev-180238/85ec11f0-5062-11eb-b832-0aa9a390fc79",
+            "AmplifyAppId": "d1op8ywd4o15kr"
+        },
+        "categories": {
+            "auth": {
+                "copbayerappgetx7172d21a": {}
+            }
+        }
+    },
+    "copbayer": {
+        "awscloudformation": {
+            "AuthRoleName": "amplify-copbayerappgetx-copbayer-102212-authRole",
+            "UnauthRoleArn": "arn:aws:iam::371466559184:role/amplify-copbayerappgetx-copbayer-102212-unauthRole",
+            "AuthRoleArn": "arn:aws:iam::371466559184:role/amplify-copbayerappgetx-copbayer-102212-authRole",
+            "Region": "us-east-1",
+            "DeploymentBucketName": "amplify-copbayerappgetx-copbayer-102212-deployment",
+            "UnauthRoleName": "amplify-copbayerappgetx-copbayer-102212-unauthRole",
+            "StackName": "amplify-copbayerappgetx-copbayer-102212",
+            "StackId": "arn:aws:cloudformation:us-east-1:371466559184:stack/amplify-copbayerappgetx-copbayer-102212/7d2433f0-776c-11eb-9b6c-0a637f9cba95",
+            "AmplifyAppId": "d3g2vxyq9dtxuh"
+        },
+        "categories": {
+            "auth": {
+                "copbayerappgetx7172d21a": {}
+            }
+        }
+    }
+}
