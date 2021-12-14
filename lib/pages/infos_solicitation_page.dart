@@ -1,14 +1,21 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:copbayer_app/controllers/fechamento_folha_controller.dart';
+import 'package:copbayer_app/repositories/post_image_web.dart';
 import 'package:copbayer_app/repositories/senha_repository.dart';
 import 'package:copbayer_app/repositories/solic_post_repository.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:copbayer_app/utils/format_money.dart';
+import 'package:copbayer_app/utils/responsive.dart';
 import 'package:copbayer_app/utils/storage_service.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:flutter/foundation.dart' show kIsWeb; // verifica se tá na WEB
 
 class InfosSolicitacaoPage extends StatefulWidget {
   final String matricula;
@@ -38,6 +45,11 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
   String valorDesconto;
   String valorLiquido;
   double iof = 0.0;
+  double cetMes = 0.0;
+  double cetAno = 0.0;
+  double taxa = 2.0; //taxa de juros copbayer
+
+  String totalPagar;
 
   bool regra;
   FormatMoney money = FormatMoney();
@@ -50,6 +62,12 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
   List<File> _images = [];
   final picker = ImagePicker();
   StorageService _storageService = StorageService();
+
+  //WEB
+  List<Uint8List> _imagesWeb = [];
+  List<String> nomeAnexos = [];
+  FilePickerResult pickedFile;
+  ImagePostRepository imagePostRepository = ImagePostRepository();
 
   Future getImage() async {
     final pickedFile =
@@ -82,9 +100,47 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
     });
   }
 
+  ///// WEB
+  Future getImageWeb() async {
+    pickedFile = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf']);
+
+    setState(
+      () {
+        if (pickedFile != null) {
+          _imagesWeb.add(pickedFile.files.last.bytes);
+          nomeAnexos.add(pickedFile.files.last.name);
+        } else {
+          print('Nenhuma imagem selecionada.');
+        }
+      },
+    );
+  }
+
+  handleDeleteImageWeb(Uint8List img) {
+    setState(() {
+      nomeAnexos.removeAt(_imagesWeb.indexOf(img));
+      _imagesWeb.remove(img);
+    });
+  }
+
+  _uploadImagesWeb() {
+    for (int i = 0; i < _imagesWeb.length; i++) {
+      imagePostRepository.uploadImage(
+        _imagesWeb[i],
+        widget.protocolo,
+        "contracheque${i + 1}",
+        "simulacaoEmprestimo",
+        "emprestimo",
+        nomeAnexos[i].split('.')[1],
+      );
+    }
+  }
+
   double calculaIOF(double valorFinanciado) {
     double iofAdicional = 0.0;
-    double fatorIOF =  0.01118 / 100;
+    double fatorIOF = 0.01118 / 100;
     double valorAmortizacao =
         (double.parse(widget.solicitacaoInfo[0]['solicitacao']) /
                 int.parse(widget.solicitacaoInfo[0]['parcela']))
@@ -209,12 +265,81 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
     // VALOR LÍQUIDO
     valorLiquido =
         (double.parse(solicitacaoInfo[0]['solicitacao']) - iof).toString();
+
+    //Total a pagar
+    totalPagar = (double.parse(valorDesconto) *
+            int.parse(widget.solicitacaoInfo[0]["parcela"]))
+        .toString();
+  }
+
+  double calculaCETMes() {
+    int parcelas = int.parse(widget.solicitacaoInfo[0]["parcela"]);
+    double valorContrato = double.parse(valorLiquido);
+    List<double> cetPrestacoes = [];
+    double taxa = 2.0;
+
+    double xam = double.parse((valorContrato / parcelas).toStringAsFixed(2));
+    double xpr;
+    var soma;
+    var xp;
+    var xh;
+    var xDIF;
+    var xCET;
+
+    for (int i = 1; i <= parcelas; i++) {
+      xpr =
+          double.parse(((valorContrato * taxa / 100) + xam).toStringAsFixed(2));
+
+      if (i == 1) {
+        xpr =
+            xpr + double.parse((valorContrato * 0.38 / 100).toStringAsFixed(2));
+      }
+
+      cetPrestacoes.add(xpr);
+      valorContrato = valorContrato - xam;
+    }
+
+    for (double j = 0.0; j < 100.0; j = j + 0.01) {
+      soma = 0.0;
+      for (int i = 1; i <= parcelas; i++) {
+        xp = pow((1 + j / 100), i);
+
+        if (xp == 0) xp = 1;
+
+        xh = double.parse((cetPrestacoes[i - 1] / xp).toStringAsFixed(2));
+
+        soma = soma + xh;
+      }
+      if (soma != 0.0) {
+        xDIF = soma - double.parse(valorLiquido);
+
+        if (xDIF < 0) {
+          print("Encontrou o CET ideal");
+          break;
+        }
+      }
+
+      xCET = j;
+      cetAno = double.parse(
+          ((pow((1 + xCET / 100), 12) - 1) * 100).toStringAsFixed(2));
+    }
+
+    return xCET;
+  }
+
+  calculaCETAnual(double cetMes) {
+    setState(() {
+      cetAno =
+          double.parse(((pow((1 + cetMes / 100), 12) - 1) * 100).toString());
+    });
   }
 
   @override
   void initState() {
     super.initState();
     calculaValores(widget.solicitacaoInfo);
+    cetMes = calculaCETMes();
+    calculaCETAnual(cetMes);
     //valorFinanciado = money.formatterMoney(double.parse(valorFinanciado));
     valorDesconto = money.formatterMoney(double.parse(valorDesconto));
     valorLiquido = money.formatterMoney(double.parse(valorLiquido));
@@ -255,7 +380,7 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
       Future<int> postSolic;
       SolicPostRepository _repositorySolicPost = SolicPostRepository();
 
-      Get.back();
+      if (!Responsive.isDesktop(context)) Get.back();
       Get.back();
       Get.back();
       Get.back();
@@ -263,7 +388,9 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
       postSolic = _repositorySolicPost.createSolic(
         {
           ...widget.solicitacaoInfo[0],
-          "anexos": _images.length,
+          "anexos": Responsive.isDesktop(context) || kIsWeb
+              ? _imagesWeb.length
+              : _images.length,
           "iof": iof,
         },
       );
@@ -281,7 +408,10 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
       //VERIFICA QUANTIDADE ANEXOS APOSENTADO
       if (widget.situacao != null &&
           widget.situacao.compareTo('A') == 0 &&
-          _images.length < 1) {
+          (((!kIsWeb && _images.isEmpty) ||
+                  (_images.isNotEmpty && _images.length < 1)) ||
+              ((kIsWeb && _imagesWeb.isEmpty) ||
+                  (_imagesWeb.isNotEmpty && _imagesWeb.length < 1)))) {
         Get.dialog(
           AlertDialog(
             title: Text("Atenção!"),
@@ -304,7 +434,11 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
 
       //VERIFICA QUANTIDADE ANEXOS ASSOCIADO
       if (widget.situacao == null ||
-          widget.situacao.compareTo('A') != 0) if (_images.length < 3) {
+          widget.situacao.compareTo('A') != 0) if (((!kIsWeb &&
+                  _images.isEmpty) ||
+              (_images.isNotEmpty && _images.length < 3)) ||
+          ((kIsWeb && _imagesWeb.isEmpty) ||
+              (_imagesWeb.isNotEmpty && _imagesWeb.length < 3))) {
         Get.dialog(
           AlertDialog(
             title: Text("Atenção!"),
@@ -328,8 +462,11 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
       //SALVA SOLIC APOSENTADO
       if (widget.situacao != null &&
           widget.situacao.compareTo("A") == 0 &&
-          _images.length >= 1) {
-        _uploadImages();
+          ((_images.isNotEmpty && _images.length >= 1) ||
+              (_imagesWeb.isNotEmpty && _imagesWeb.length >= 1))) {
+        Responsive.isDesktop(context) || kIsWeb
+            ? _uploadImagesWeb()
+            : _uploadImages();
         Get.dialog(
           AlertDialog(
             title: Text("Confirme sua senha"),
@@ -386,8 +523,11 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
 
       //SALVA SOLIC ASSOCIADO
       if (widget.situacao == null || widget.situacao.compareTo("A") != 0) {
-        if (_images.length >= 3) {
-          _uploadImages();
+        if ((_images.isNotEmpty && _images.length >= 3) ||
+            (_imagesWeb.isNotEmpty && _imagesWeb.length >= 3)) {
+          Responsive.isDesktop(context) || kIsWeb
+              ? _uploadImagesWeb()
+              : _uploadImages();
           Get.dialog(
             AlertDialog(
               title: Text("Confirme sua senha"),
@@ -456,7 +596,7 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
             TextButton(
               child: Text("NÃO"),
               onPressed: () {
-                Get.back();
+                if (!Responsive.isDesktop(context)) Get.back();
                 Get.back();
                 Get.back();
                 Get.snackbar("Solicitação não realizada!", "",
@@ -485,204 +625,273 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
         backgroundColor: Colors.green[300],
       ),
       body: SingleChildScrollView(
-        child: Stack(children: [
-          Column(
-            children: [
-              SizedBox(
-                height: 50.0,
-              ),
-              Text(
-                "Solicitação de Empréstimo",
-                style: TextStyle(
-                    fontSize: 26.0,
-                    color: Colors.green[300],
-                    fontWeight: FontWeight.bold),
-              ),
-              SizedBox(
-                height: 30.0,
-              ),
-              _buildCardInfo("Valor Financiado", Icons.attach_money,
-                  money.formatterMoney(double.parse(valorFinanciado))),
-              SizedBox(
-                height: 10.0,
-              ),
-              Divider(
-                height: 5.0,
-              ),
-              _buildCardInfo("Estimativa de Desconto em Folha", Icons.money_off,
-                  valorDesconto),
-              SizedBox(
-                height: 10.0,
-              ),
-              Divider(
-                height: 5.0,
-              ),
-              _buildCardInfo(
-                  "IOF", Icons.info, money.formatterMoney(iof)), //CALCULAR IOF
-              SizedBox(
-                height: 10.0,
-              ),
-              Divider(
-                height: 5.0,
-              ),
-              _buildCardInfo(
-                  "Estimativa de Valor Líquido", Icons.payment, valorLiquido),
-              SizedBox(
-                height: 10.0,
-              ),
-              Divider(
-                height: 5.0,
-              ),
-              SizedBox(
-                height: 50.0,
-              ),
-
-              /*_buildCardInfo("Número de anexos", Icons.file_copy_outlined,
-                  widget.qtdeAnexos.toString()),*/
-
-              /// ANEXOS!!!!
-              Container(
-                padding: const EdgeInsets.only(left: 20, top: 20),
-                margin:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    width: 0.5,
-                    color: Colors.grey,
+        child: Stack(
+          children: [
+            Container(
+              padding: Responsive.isDesktop(context)
+                  ? EdgeInsets.symmetric(horizontal: alturaTela * 0.25)
+                  : EdgeInsets.symmetric(horizontal: 5),
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: 50.0,
                   ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Anexar os arquivos",
-                      style: TextStyle(
-                        fontSize: 20.0,
+                  Text(
+                    "Solicitação de Empréstimo",
+                    style: TextStyle(
+                        fontSize: 26.0,
                         color: Colors.green[300],
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(
+                    height: 30.0,
+                  ),
+                  _buildCardInfo("Valor Financiado", Icons.attach_money,
+                      money.formatterMoney(double.parse(valorFinanciado))),
+                  SizedBox(
+                    height: 10.0,
+                  ),
+                  Divider(
+                    height: 5.0,
+                  ),
+                  _buildCardInfo(
+                      "Número de prestações",
+                      Icons.format_list_numbered_outlined,
+                      widget.solicitacaoInfo[0]["parcela"]),
+                  SizedBox(
+                    height: 10.0,
+                  ),
+                  Divider(
+                    height: 5.0,
+                  ),
+                  _buildCardInfo("Estimativa de Desconto Mensal em Folha",
+                      Icons.money_off, valorDesconto),
+                  SizedBox(
+                    height: 10.0,
+                  ),
+                  Divider(
+                    height: 5.0,
+                  ),
+                  _buildCardInfo("IOF", Icons.info,
+                      money.formatterMoney(iof)), //CALCULAR IOF
+                  SizedBox(
+                    height: 10.0,
+                  ),
+                  Divider(
+                    height: 5.0,
+                  ),
+                  _buildCardInfo("Estimativa de Valor Líquido", Icons.payment,
+                      valorLiquido),
+                  SizedBox(
+                    height: 10.0,
+                  ),
+                  Divider(
+                    height: 5.0,
+                  ),
+                  _buildCardInfo("Total a Pagar", MdiIcons.cashMultiple,
+                      money.formatterMoney(double.parse(totalPagar))),
+                  SizedBox(
+                    height: 10.0,
+                  ),
+                  Divider(
+                    height: 5.0,
+                  ),
+                  _buildCardInfo(
+                      "Taxa de Juros", MdiIcons.ticketPercentOutline, "$taxa%"),
+                  SizedBox(
+                    height: 10.0,
+                  ),
+                  Divider(
+                    height: 5.0,
+                  ),
+                  _buildCardInfo(
+                      "CET",
+                      MdiIcons.percentOutline,
+                      MediaQuery.of(context).size.width < 400
+                          ? "${cetMes.toStringAsFixed(2)}% a.m.\n${cetAno.toStringAsFixed(2)}% a.a."
+                          : "${cetMes.toStringAsFixed(2)}% a.m. ${cetAno.toStringAsFixed(2)}% a.a."),
+                  SizedBox(
+                    height: 10.0,
+                  ),
+                  Divider(
+                    height: 5.0,
+                  ),
+                  SizedBox(
+                    height: 50.0,
+                  ),
+
+                  /*_buildCardInfo("Número de anexos", Icons.file_copy_outlined,
+                    widget.qtdeAnexos.toString()),*/
+
+                  /// ANEXOS!!!!
+                  Container(
+                    padding: const EdgeInsets.only(left: 20, top: 20),
+                    margin: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 20),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        width: 0.5,
+                        color: Colors.grey,
                       ),
                     ),
-                    SizedBox(
-                      height: 20,
-                    ),
-                    Text(
-                      "Os documentos a serem anexados são: ",
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    SizedBox(
-                      height: 20,
-                    ),
-                    Text("1. Contra-cheque/Holerite (3 últimos)"),
-                    SizedBox(
-                      height: 10,
-                    ),
-                    Text(
-                        "2. Demonstrativo de saldo devedor/consignado (se tiver)"),
-                    SizedBox(
-                      height: 20,
-                    ),
-                    Text(
-                      "Para os aposentados, é preciso: ",
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    SizedBox(
-                      height: 20,
-                    ),
-                    Text(
-                        "1. Demonstrativo do pagamento do INSS ou extrato da conta bancária que recebe a aposentadoria"),
-                    SizedBox(
-                      height: 20,
-                    ),
-                    Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ElevatedButton(
-                          onPressed: () {
-                            getImage();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            primary: Colors.blue,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(50.0),
-                              side: BorderSide(color: Colors.blue),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                "Anexar documentos",
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: alturaTela * 0.019),
-                              ),
-                              SizedBox(
-                                width:
-                                    MediaQuery.of(context).size.width * 0.036,
-                              ),
-                              Icon(
-                                Icons.note_add,
-                                size: alturaTela * 0.025,
-                                color: Colors.white,
-                              ),
-                            ],
+                        Text(
+                          "Anexar os arquivos",
+                          style: TextStyle(
+                            fontSize: 20.0,
+                            color: Colors.green[300],
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(
-                          width: 20.0,
+                        SizedBox(
+                          height: 20,
                         ),
                         Text(
-                          "${_images.isNotEmpty ? _images.length : 0} anexo(s)",
+                          "Os documentos a serem anexados são: ",
                           style: TextStyle(
-                            color: Colors.green,
-                            fontSize: 20.0,
-                          ),
-                        )
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        SizedBox(
+                          height: 20,
+                        ),
+                        Text("1. Contra-cheque/Holerite (3 últimos)"),
+                        SizedBox(
+                          height: 10,
+                        ),
+                        Text(
+                            "2. Demonstrativo de saldo devedor/consignado (se tiver)"),
+                        SizedBox(
+                          height: 20,
+                        ),
+                        Text(
+                          "Para os aposentados, é preciso: ",
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        SizedBox(
+                          height: 20,
+                        ),
+                        Text(
+                            "1. Demonstrativo do pagamento do INSS ou extrato da conta bancária que recebe a aposentadoria"),
+                        SizedBox(
+                          height: 20,
+                        ),
+                        Row(
+                          children: [
+                            ElevatedButton(
+                              onPressed: () {
+                                Responsive.isDesktop(context) || kIsWeb
+                                    ? getImageWeb()
+                                    : getImage();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                primary: Colors.blue,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(50.0),
+                                  side: BorderSide(color: Colors.blue),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    "Anexar documentos",
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: alturaTela * 0.019),
+                                  ),
+                                  SizedBox(
+                                    width: MediaQuery.of(context).size.width *
+                                        0.036,
+                                  ),
+                                  Icon(
+                                    Icons.note_add,
+                                    size: alturaTela * 0.025,
+                                    color: Colors.white,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(
+                              width: 20.0,
+                            ),
+                            FittedBox(
+                              child: Text(
+                                "${_images.isNotEmpty ? _images.length : _imagesWeb.isNotEmpty ? _imagesWeb.length : 0} anexo(s)",
+                                style: TextStyle(
+                                  color: Colors.green,
+                                  fontSize: alturaTela * 0.023,
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        if (Responsive.isDesktop(context) || kIsWeb)
+                          ..._imagesWeb.map((img) {
+                            return Row(
+                              children: [
+                                Expanded(
+                                  child: Text(pickedFile != null
+                                      ? "${nomeAnexos[_imagesWeb.indexOf(img)]}" //nome da cada um ????
+                                      : 'Erro ao selecionar o documento. Tente novamente.'),
+                                ),
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.delete_forever_outlined,
+                                    color: Colors.red,
+                                  ),
+                                  onPressed: () => handleDeleteImageWeb(img),
+                                )
+                              ],
+                            );
+                          }).toList()
+                        else
+                          ..._images.map((img) {
+                            return Row(
+                              children: [
+                                Container(
+                                  margin: const EdgeInsets.only(bottom: 5),
+                                  constraints: BoxConstraints(
+                                      maxHeight: 60.0, maxWidth: 50.0),
+                                  child: Image.file(
+                                    img,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(width: 4.0),
+                                Expanded(
+                                  child: Text("anexo.jpg"),
+                                ),
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.delete_forever_outlined,
+                                    color: Colors.red,
+                                  ),
+                                  onPressed: () => handleDeleteImage(img),
+                                )
+                              ],
+                            );
+                          }).toList(),
                       ],
                     ),
-                    const SizedBox(height: 10),
-                    ..._images.map((img) {
-                      return Row(
-                        children: [
-                          Container(
-                            margin: const EdgeInsets.only(bottom: 5),
-                            constraints:
-                                BoxConstraints(maxHeight: 60.0, maxWidth: 50.0),
-                            child: Image.file(
-                              img,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          const SizedBox(width: 4.0),
-                          Expanded(
-                            child: Text("anexo.jpg"),
-                          ),
-                          IconButton(
-                            icon: Icon(
-                              Icons.delete_forever_outlined,
-                              color: Colors.red,
-                            ),
-                            onPressed: () => handleDeleteImage(img),
-                          )
-                        ],
-                      );
-                    }).toList(),
-                  ],
-                ),
-              ),
+                  ),
 
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildButton("CANCELAR", Colors.red, handleCancel),
-                  _buildButton(
-                      "SOLICITAR", Colors.green[300], handleSolicitacao),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildButton("CANCELAR", Colors.red, handleCancel),
+                      _buildButton(
+                          "SOLICITAR", Colors.green[300], handleSolicitacao),
+                    ],
+                  ),
                 ],
               ),
-            ],
-          ),
-        ]),
+            ),
+          ],
+        ),
       ),
     );
   }

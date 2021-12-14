@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_masked_text/flutter_masked_text.dart';
 import 'package:get/get.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart' show kIsWeb; // verifica se tá na WEB
 
 import 'package:get/state_manager.dart';
 
@@ -81,7 +82,7 @@ class SolicitacaoPostController extends GetxController {
         "valorcr": _convertDouble(controllerValor.text),
         //"utilizada": utilizada
         "situacao": "P",
-        "origem": "APP",
+        "origem": kIsWeb ? "WEB" : "APP",
       }
     ];
   }

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:copbayer_app/repositories/senha_repository.dart';
+import 'package:copbayer_app/utils/responsive.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -8,7 +9,10 @@ class SolicitarButton extends StatelessWidget {
   final Function handleSolicitar;
   final int matricula;
 
-  SolicitarButton({this.handleSolicitar, this.matricula});
+  SolicitarButton({
+    this.handleSolicitar,
+    this.matricula,
+  });
 
   final TextEditingController controller = TextEditingController();
   final SenhaRepository senhaRepository = SenhaRepository();
@@ -18,9 +22,12 @@ class SolicitarButton extends StatelessWidget {
     final alturaTela =
         MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top;
 
-    return SizedBox(
+    return Container(
       height: alturaTela * 0.055, //45,
       width: MediaQuery.of(context).size.width * 0.73,
+      padding: Responsive.isDesktop(context)
+          ? EdgeInsets.symmetric(horizontal: alturaTela * 0.3)
+          : EdgeInsets.zero,
       child: ElevatedButton(
         onPressed: () {
           return Get.dialog(
@@ -47,7 +54,7 @@ class SolicitarButton extends StatelessWidget {
                               0) {
                             Future.delayed(Duration(seconds: 20));
                             // VOLTAR PRA HOME
-                            Get.back();
+                            if (!Responsive.isDesktop(context)) Get.back();
                             Get.back();
                             Get.back();
 

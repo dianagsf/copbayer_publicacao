@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:copbayer_app/controllers/devedor_controller.dart';
 import 'package:copbayer_app/controllers/fechamento_folha_controller.dart';
@@ -9,13 +10,17 @@ import 'package:copbayer_app/model/fechamento_folha_model.dart';
 import 'package:copbayer_app/model/proposta_model.dart';
 import 'package:copbayer_app/pages/controle/fechamento_folha.dart';
 import 'package:copbayer_app/pages/submenu/widgets/infos_devedor.dart';
+import 'package:copbayer_app/repositories/post_image_web.dart';
 import 'package:copbayer_app/repositories/quitacao_repository.dart';
 import 'package:copbayer_app/repositories/senha_repository.dart';
 import 'package:copbayer_app/utils/format_money.dart';
+import 'package:copbayer_app/utils/responsive.dart';
 import 'package:copbayer_app/utils/storage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb; // verifica se tá na WEB
 
 class QuitacaoPage extends StatefulWidget {
   final int matricula;
@@ -42,6 +47,11 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
   File _image;
   final picker = ImagePicker();
   StorageService _storageService = StorageService();
+
+  //WEB
+  Uint8List _imageWeb;
+  FilePickerResult pickedFile;
+  ImagePostRepository imagePostRepository = ImagePostRepository();
 
   QuitacaoRepository quitacaoRepository = QuitacaoRepository();
   int selectedRadio = 0;
@@ -121,6 +131,44 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
     );
   }
 
+  ///// WEB
+  Future getImageWeb() async {
+    pickedFile = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf']);
+
+    setState(
+      () {
+        if (pickedFile != null) {
+          _imageWeb = pickedFile.files.first.bytes;
+        } else {
+          print('Nenhuma imagem selecionada.');
+        }
+      },
+    );
+  }
+
+  handleDeleteImageWeb() {
+    setState(() {
+      _imageWeb = null;
+    });
+  }
+
+  _uploadComprovanteWeb() {
+    String extensaoArq = pickedFile.files.first.extension.toString();
+
+    if (_imageWeb != null) {
+      imagePostRepository.uploadImage(
+        _imageWeb,
+        protocolo,
+        "comprovante",
+        "comprovanteQuitacao",
+        "quitacao",
+        extensaoArq,
+      );
+    }
+  }
+
   showSenhaDialog() {
     if (selectedRadio == 0) {
       Get.dialog(
@@ -164,25 +212,50 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
       );
     }
 
-    if (_image == null) {
-      Get.dialog(
-        AlertDialog(
-          title: Text("Atenção!"),
-          content: Text(
-            "Você deve anexar o comprovante de quitação.",
-            style: TextStyle(fontSize: 18),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: Text("OK"),
+    if (Responsive.isDesktop(context) || kIsWeb) {
+      if (_imageWeb == null) {
+        Get.dialog(
+          AlertDialog(
+            title: Text("Atenção!"),
+            content: Text(
+              "Adicione o comprovante.",
+              style: TextStyle(fontSize: 18),
             ),
-          ],
-        ),
-      );
+            actions: [
+              TextButton(
+                onPressed: () => Get.back(),
+                child: Text(
+                  'OK',
+                  style: TextStyle(fontSize: 18),
+                ),
+              )
+            ],
+          ),
+        );
+      }
+    } else {
+      if (_image == null) {
+        Get.dialog(
+          AlertDialog(
+            title: Text("Atenção!"),
+            content: Text(
+              "Você deve anexar o comprovante de quitação.",
+              style: TextStyle(fontSize: 18),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Get.back(),
+                child: Text("OK"),
+              ),
+            ],
+          ),
+        );
+      }
     }
 
-    if (selectedRadio != 0 && selectedEmp.length != 0 && _image != null) {
+    if (selectedRadio != 0 &&
+        selectedEmp.length != 0 &&
+        (_image != null || _imageWeb != null)) {
       Get.dialog(
         AlertDialog(
           title: Text("Confirme sua senha"),
@@ -219,8 +292,11 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
                           });
                         }
 
-                        _uploadComprovante();
+                        Responsive.isDesktop(context) || kIsWeb
+                            ? _uploadComprovanteWeb()
+                            : _uploadComprovante();
 
+                        if (!Responsive.isDesktop(context)) Get.back();
                         Get.back();
                         Get.back();
                         Get.snackbar(
@@ -379,7 +455,10 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
                       alturaTela,
                     ),
                     Padding(
-                      padding: const EdgeInsets.all(20.0),
+                      padding: Responsive.isDesktop(context)
+                          ? EdgeInsets.symmetric(
+                              horizontal: alturaTela * 0.3, vertical: 20)
+                          : const EdgeInsets.all(20.0),
                       child: Card(
                         elevation: 5,
                         child: Container(
@@ -428,7 +507,10 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
                     const SizedBox(height: 40),
                     isDevedor
                         ? Container(
-                            padding: const EdgeInsets.all(20),
+                            padding: Responsive.isDesktop(context)
+                                ? EdgeInsets.symmetric(
+                                    horizontal: alturaTela * 0.3, vertical: 20)
+                                : const EdgeInsets.all(20),
                             child: Text(
                               "Deseja usar o saldo capital para quitação do saldo devedor?",
                               style: TextStyle(
@@ -443,31 +525,37 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
                       height: 20,
                     ),
                     isDevedor
-                        ? Row(
-                            children: [
-                              Expanded(
-                                child: RadioListTile(
-                                  value: 1,
-                                  groupValue: selectedRadio,
-                                  title: Text("SIM"),
-                                  activeColor: Colors.blue[700],
-                                  onChanged: (value) {
-                                    setSelectedRadio(value);
-                                  },
+                        ? Container(
+                            width: double.infinity,
+                            margin: Responsive.isDesktop(context)
+                                ? EdgeInsets.only(left: alturaTela * 0.5)
+                                : EdgeInsets.zero,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: RadioListTile(
+                                    value: 1,
+                                    groupValue: selectedRadio,
+                                    title: Text("SIM"),
+                                    activeColor: Colors.blue[700],
+                                    onChanged: (value) {
+                                      setSelectedRadio(value);
+                                    },
+                                  ),
                                 ),
-                              ),
-                              Expanded(
-                                child: RadioListTile(
-                                  value: 2,
-                                  groupValue: selectedRadio,
-                                  title: Text("NÃO"),
-                                  activeColor: Colors.blue[700],
-                                  onChanged: (value) {
-                                    setSelectedRadio(value);
-                                  },
+                                Expanded(
+                                  child: RadioListTile(
+                                    value: 2,
+                                    groupValue: selectedRadio,
+                                    title: Text("NÃO"),
+                                    activeColor: Colors.blue[700],
+                                    onChanged: (value) {
+                                      setSelectedRadio(value);
+                                    },
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           )
                         : SizedBox.shrink(),
                     const SizedBox(height: 20),
@@ -487,13 +575,26 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
                         : SizedBox.shrink(),
                     isDevedor && selectedRadio == 2 || infosDevedor
                         ? buildAnexo(
-                            alturaTela, getImage, handleDeleteImage, _image)
+                            alturaTela,
+                            getImage,
+                            getImageWeb,
+                            handleDeleteImage,
+                            handleDeleteImageWeb,
+                            _image,
+                            _imageWeb,
+                            pickedFile,
+                            context,
+                          )
                         : SizedBox.shrink(),
                     isDevedor
                         ? Container(
                             margin: const EdgeInsets.symmetric(vertical: 15),
                             height: alturaTela * 0.055, //45,
                             width: MediaQuery.of(context).size.width * 0.73,
+                            padding: Responsive.isDesktop(context)
+                                ? EdgeInsets.symmetric(
+                                    horizontal: alturaTela * 0.5)
+                                : EdgeInsets.zero,
                             child: ElevatedButton(
                               onPressed: showSenhaDialog,
                               style: ElevatedButton.styleFrom(
@@ -612,7 +713,12 @@ Widget _buidTableQuitacao(
                   ? const EdgeInsets.only(left: 15)
                   : EdgeInsets.zero,
               alignment: Alignment.center,
-              child: Text(header),
+              child: Text(
+                header,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ),
         )
@@ -720,11 +826,20 @@ bool handleFechamentoFolha(List<FechamentoFolhaModel> fechamentoFolha) {
   return false;
 }
 
-Widget buildAnexoButton(Function getImage) {
+Widget buildAnexoButton(
+  Function getImage,
+  Function getImageWeb,
+  double alturaTela,
+  BuildContext context,
+) {
   return Container(
     margin: const EdgeInsets.only(top: 20),
+    padding: Responsive.isDesktop(context)
+        ? EdgeInsets.symmetric(horizontal: alturaTela * 0.4)
+        : EdgeInsets.zero,
     child: ElevatedButton.icon(
-      onPressed: getImage,
+      onPressed:
+          Responsive.isDesktop(context) || kIsWeb ? getImageWeb : getImage,
       style: ElevatedButton.styleFrom(
         primary: Colors.blue,
         shape: RoundedRectangleBorder(
@@ -748,47 +863,67 @@ Widget buildAnexoButton(Function getImage) {
 Widget buildAnexo(
   double alturaTela,
   Function getImage,
+  Function getImageWeb,
   Function handleDeleteImage,
+  Function handleDeleteImageWeb,
   File _image,
+  Uint8List _imageWeb,
+  FilePickerResult pickedFile,
+  BuildContext context,
 ) {
   return Column(
     children: [
       Container(
         margin: const EdgeInsets.only(left: 20),
         alignment: Alignment.centerLeft,
-        child: buildAnexoButton(getImage),
+        child: buildAnexoButton(getImage, getImageWeb, alturaTela, context),
       ),
-      _image != null
+      _image != null || _imageWeb != null
           ? Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+              padding: Responsive.isDesktop(context)
+                  ? EdgeInsets.symmetric(
+                      horizontal: alturaTela * 0.4, vertical: 15)
+                  : const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
               child: Row(
                 children: [
                   Container(
                     margin: const EdgeInsets.only(bottom: 5),
                     constraints:
                         BoxConstraints(maxHeight: 60.0, maxWidth: 50.0),
-                    child: Image.file(
-                      _image,
-                      fit: BoxFit.cover,
-                    ),
+                    child: Responsive.isDesktop(context) || kIsWeb
+                        ? SizedBox.shrink()
+                        : Image.file(
+                            _image,
+                            fit: BoxFit.cover,
+                          ),
                   ),
                   const SizedBox(width: 4.0),
-                  Expanded(
-                    child: Text("comprovante.jpg"),
-                  ),
+                  Responsive.isDesktop(context) || kIsWeb
+                      ? Expanded(
+                          child: Text(pickedFile != null
+                              ? '${pickedFile.files.first.name}'
+                              : 'Erro ao selecionar o documento. Tente novamente.'))
+                      : Expanded(
+                          child: Text("comprovante.jpg"),
+                        ),
                   IconButton(
                     icon: Icon(
                       Icons.delete_forever_outlined,
                       color: Colors.red,
                     ),
-                    onPressed: handleDeleteImage,
+                    onPressed: Responsive.isDesktop(context) || kIsWeb
+                        ? handleDeleteImageWeb
+                        : handleDeleteImage,
                   ),
                 ],
               ),
             )
           : SizedBox.shrink(),
-      Padding(
-        padding: const EdgeInsets.all(20),
+      Container(
+        alignment: Alignment.centerLeft,
+        padding: Responsive.isDesktop(context)
+            ? EdgeInsets.symmetric(horizontal: alturaTela * 0.43, vertical: 20)
+            : const EdgeInsets.all(20),
         child: Text(
           "Obs.: Caso já tenha realizado o pagamento, mande uma foto do comprovante.",
           style: TextStyle(

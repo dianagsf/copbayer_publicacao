@@ -6,9 +6,20 @@
          additional functionality it is fine to subclass or reimplement
          FlutterApplication and put your custom class here. -->
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <queries>
+      <package android:name="com.whatsapp" />
+      <package android:name="com.whatsapp.w4b" />
+      <!-- If your app opens https URLs -->
+      <intent>
+        <action android:name="android.intent.action.VIEW" />
+        <data android:scheme="https" />
+      </intent>
+   </queries>
+
     <application
         android:name="io.flutter.app.FlutterApplication"
-        android:label="Copbayer App"
+        android:label="Copbayer"
         android:icon="@mipmap/launcher_icon"
         android:usesCleartextTraffic="true">
         <activity

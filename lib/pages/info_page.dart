@@ -1,3 +1,4 @@
+import 'package:copbayer_app/utils/responsive.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -24,32 +25,35 @@ class InfoPage extends StatelessWidget {
       ),
       body: CustomScrollView(
         slivers: [
-          SliverToBoxAdapter(
-            child: CarouselSlider(
-              options: CarouselOptions(
-                viewportFraction: 1,
-                initialPage: 0,
-                enableInfiniteScroll: true,
-                reverse: false,
-                autoPlay: true,
-                autoPlayInterval: Duration(seconds: 3),
-                autoPlayAnimationDuration: Duration(milliseconds: 800),
-                autoPlayCurve: Curves.fastOutSlowIn,
-                enlargeCenterPage: true,
-                scrollDirection: Axis.horizontal,
-              ),
-              items: [
-                _buildCardCarrousel('images/info.jpg', 'Crédito Pessoal'),
-                _buildCardCarrousel('images/infoPromo.jpg', 'Conta Capital'),
-                _buildCardCarrousel(
-                    'images/assessoriajuridica.jpg', 'Assessoria Jurídica'),
-              ],
-            ),
-          ),
+          !Responsive.isDesktop(context) && !Responsive.isTablet(context)
+              ? SliverToBoxAdapter(
+                  child: CarouselSlider(
+                    options: CarouselOptions(
+                      viewportFraction: 1,
+                      initialPage: 0,
+                      enableInfiniteScroll: true,
+                      reverse: false,
+                      autoPlay: true,
+                      autoPlayInterval: Duration(seconds: 3),
+                      autoPlayAnimationDuration: Duration(milliseconds: 800),
+                      autoPlayCurve: Curves.fastOutSlowIn,
+                      enlargeCenterPage: true,
+                      scrollDirection: Axis.horizontal,
+                    ),
+                    items: [
+                      _buildCardCarrousel('images/info.jpg', 'Crédito Pessoal'),
+                      _buildCardCarrousel(
+                          'images/infoPromo.jpg', 'Conta Capital'),
+                      _buildCardCarrousel('images/assessoriajuridica.jpg',
+                          'Assessoria Jurídica'),
+                    ],
+                  ),
+                )
+              : SliverToBoxAdapter(),
           SliverPadding(
             padding: EdgeInsets.symmetric(horizontal: 20, vertical: 40),
             sliver: SliverGrid.count(
-              crossAxisCount: 2,
+              crossAxisCount: Responsive.isMobile(context) ? 2 : 4,
               mainAxisSpacing: 20,
               crossAxisSpacing: 20,
               children: [

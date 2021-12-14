@@ -1,6 +1,7 @@
 import 'package:copbayer_app/controllers/proposta_controller.dart';
 import 'package:copbayer_app/controllers/solicitacoes_controller.dart';
 import 'package:copbayer_app/utils/format_money.dart';
+import 'package:copbayer_app/utils/responsive.dart';
 import 'package:copbayer_app/widgets/table/propostas.dart';
 import 'package:copbayer_app/widgets/table/solicitacoes.dart';
 import 'package:flutter/material.dart';
@@ -68,7 +69,9 @@ class _SolicitationsTableState extends State<SolicitationsTable> {
                       color: Colors.green[400],
                       fontSize: widget.solicitationsPage
                           ? alturaTela * 0.03
-                          : alturaTela * 0.027, //24.0 : 22.0,
+                          : Responsive.isDesktop(context)
+                              ? alturaTela * 0.04
+                              : alturaTela * 0.027, //24.0 : 22.0,
                       fontWeight: FontWeight.w500,
                     ),
                   ),

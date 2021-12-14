@@ -8,6 +8,7 @@ import 'package:copbayer_app/pages/controle/limite_solic_page.dart';
 import 'package:copbayer_app/pages/submenu/widgets/dropdown_button.dart';
 import 'package:copbayer_app/pages/submenu/widgets/solicitar_button.dart';
 import 'package:copbayer_app/repositories/faixa_capital_repository.dart';
+import 'package:copbayer_app/utils/responsive.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_masked_text/flutter_masked_text.dart';
 import 'package:get/get.dart';
@@ -114,7 +115,10 @@ class _AlteracaoCapitalPageState extends State<AlteracaoCapitalPage> {
                     ),
                     body: SingleChildScrollView(
                       child: Padding(
-                        padding: EdgeInsets.all(10.0),
+                        padding: Responsive.isDesktop(context)
+                            ? EdgeInsets.symmetric(
+                                horizontal: alturaTela * 0.5, vertical: 10)
+                            : EdgeInsets.all(10.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -224,7 +228,14 @@ class _AlteracaoCapitalPageState extends State<AlteracaoCapitalPage> {
                                       matricula: widget.matricula,
                                     ),
                                   )
-                                : buildButtonDialog(context, alturaTela),
+                                : Container(
+                                    padding: Responsive.isDesktop(context)
+                                        ? EdgeInsets.symmetric(
+                                            horizontal: alturaTela * 0.2)
+                                        : EdgeInsets.zero,
+                                    child:
+                                        buildButtonDialog(context, alturaTela),
+                                  ),
                             SizedBox(
                               height: alturaTela * 0.025,
                             )

@@ -8,6 +8,7 @@ import 'package:copbayer_app/pages/controle/limite_solic_page.dart';
 import 'package:copbayer_app/pages/submenu/widgets/solicitar_button_retirada.dart';
 import 'package:copbayer_app/repositories/devedor_repository.dart';
 import 'package:copbayer_app/utils/format_money.dart';
+import 'package:copbayer_app/utils/responsive.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_masked_text/flutter_masked_text.dart';
 import 'package:get/get.dart';
@@ -108,7 +109,10 @@ class _RetiradaCapitalState extends State<RetiradaCapital> {
                           height: alturaTela * 0.12,
                         ),
                         Container(
-                          padding: EdgeInsets.only(left: 50, right: 50),
+                          padding: Responsive.isDesktop(context)
+                              ? EdgeInsets.symmetric(
+                                  horizontal: alturaTela * 0.8)
+                              : EdgeInsets.only(left: 50, right: 50),
                           child: SolicitarButtonRetirada(
                             matricula: widget.matricula,
                           ),
@@ -125,8 +129,13 @@ class _RetiradaCapitalState extends State<RetiradaCapital> {
 
 Widget buildCardSaldo(SaldoCapitalController saldoCapitalController,
     FormatMoney money, double alturaTela, BuildContext context) {
-  return SizedBox(
-    height: MediaQuery.of(context).size.width * 0.49, //200.0,
+  return Container(
+    padding: Responsive.isDesktop(context)
+        ? EdgeInsets.symmetric(horizontal: alturaTela * 0.6, vertical: 20)
+        : EdgeInsets.zero,
+    height: Responsive.isDesktop(context)
+        ? alturaTela * 0.35
+        : MediaQuery.of(context).size.width * 0.49, //200.0,
     child: Card(
       margin: EdgeInsets.only(top: 10.0),
       elevation: 30,

@@ -6,6 +6,7 @@ import 'package:copbayer_app/controllers/retirada_capital_controller.dart';
 import 'package:copbayer_app/controllers/saldo_capital_controller.dart';
 import 'package:copbayer_app/repositories/senha_repository.dart';
 import 'package:copbayer_app/utils/format_money.dart';
+import 'package:copbayer_app/utils/responsive.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -49,7 +50,7 @@ class SolicitarButtonRetirada extends StatelessWidget {
                         0) {
                       Future.delayed(Duration(seconds: 20));
                       // VOLTAR PRA HOME
-                      Get.back();
+                      if (!Responsive.isDesktop(context)) Get.back();
                       Get.back();
                       Get.back();
 
@@ -103,7 +104,7 @@ class SolicitarButtonRetirada extends StatelessWidget {
     return valorArredondado;
   }
 
-  handleRetirada() {
+  handleRetirada(BuildContext context) {
     FormatMoney money = FormatMoney();
     var valorRetirada = retiradaCapitalController.controllerValor.text;
 
@@ -113,6 +114,37 @@ class SolicitarButtonRetirada extends StatelessWidget {
 
     double valorArredondado = arredondaValor(valor);
     print("valor arredondado = $valorArredondado");
+
+    if (propostaController.propostas.length != 0) {
+      var qtdEmprestimos = propostaController.propostas.length;
+      return Get.dialog(
+        AlertDialog(
+          title: Text(
+            "Atenção!",
+            style: TextStyle(fontSize: 22),
+          ),
+          content: Text(
+            "Você já possui $qtdEmprestimos empréstimo(s) em curso. Sua solicitação foi negada.",
+            style: TextStyle(fontSize: 18),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                if (!Responsive.isDesktop(context)) Get.back();
+                Get.back();
+                Get.back();
+
+                //showSenhaDialog();
+              },
+              child: Text(
+                "OK",
+                style: TextStyle(fontSize: 20),
+              ),
+            )
+          ],
+        ),
+      );
+    }
 
     if (valor < 300.0) {
       Get.dialog(AlertDialog(
@@ -144,7 +176,7 @@ class SolicitarButtonRetirada extends StatelessWidget {
           style: TextStyle(fontSize: 22),
         ),
         content: Text(
-          "Você solicitou a retirada de um valor maior do que o permitido!. Sua solicitação foi negada.",
+          "Você solicitou a retirada de um valor maior do que o permitido! Sua solicitação foi negada.",
           style: TextStyle(fontSize: 18),
         ),
         actions: [
@@ -159,36 +191,7 @@ class SolicitarButtonRetirada extends StatelessWidget {
         ],
       ));
     }
-    if (propostaController.propostas.length != 0) {
-      var qtdEmprestimos = propostaController.propostas.length;
-      return Get.dialog(
-        AlertDialog(
-          title: Text(
-            "Atenção!",
-            style: TextStyle(fontSize: 22),
-          ),
-          content: Text(
-            "Você já possui $qtdEmprestimos empréstimo(s) em curso. Sua solicitação foi negada.",
-            style: TextStyle(fontSize: 18),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Get.back();
-                Get.back();
-                Get.back();
 
-                //showSenhaDialog();
-              },
-              child: Text(
-                "OK",
-                style: TextStyle(fontSize: 20),
-              ),
-            )
-          ],
-        ),
-      );
-    }
     if (valor > 300 &&
         (saldo - valorArredondado > 48) &&
         propostaController.propostas.length == 0) {
@@ -226,7 +229,7 @@ class SolicitarButtonRetirada extends StatelessWidget {
       width: MediaQuery.of(context).size.width * 0.73,
       child: ElevatedButton(
         onPressed: () {
-          handleRetirada();
+          handleRetirada(context);
           /*return Get.dialog(
             AlertDialog(
               title: Text("Confirme sua senha"),

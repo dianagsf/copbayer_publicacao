@@ -7,7 +7,8 @@ class Email {
 
   Email(String username, String password) {
     _username = username;
-    smtpServer = gmail(_username, password);
+    smtpServer =
+        SmtpServer('email-ssl.com.br', username: username, password: password);
   }
 
   //Envia um email para o destinatário, contendo a mensagem com o nome do sorteado

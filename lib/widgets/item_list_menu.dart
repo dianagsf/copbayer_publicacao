@@ -14,12 +14,12 @@ Widget buildItemList(
   Icon icon,
   String text,
   Widget page, {
-   bool solicitacoes,
+  bool solicitacoes,
   int matricula,
   String nome,
-   String data,
-   String opCapitalizacao,
- String cpf,
+  String data,
+  String opCapitalizacao,
+  String cpf,
   String situacao,
 }) {
   if (solicitacoes) {

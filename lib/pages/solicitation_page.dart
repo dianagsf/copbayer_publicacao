@@ -1,4 +1,5 @@
 import 'package:copbayer_app/utils/format_money.dart';
+import 'package:copbayer_app/utils/responsive.dart';
 import 'package:copbayer_app/widgets/table/table_solicitations.dart';
 import 'package:flutter/material.dart';
 
@@ -51,7 +52,10 @@ class _SolicitationPageState extends State<SolicitationPage> {
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
-              labelPadding: EdgeInsets.symmetric(horizontal: alturaTela * 0.05),
+              labelPadding: EdgeInsets.symmetric(
+                  horizontal: Responsive.isDesktop(context)
+                      ? alturaTela * 0.09
+                      : alturaTela * 0.05),
               tabs: [
                 Tab(text: 'Pendentes'),
                 Tab(text: 'Processadas'),
@@ -67,7 +71,10 @@ class _SolicitationPageState extends State<SolicitationPage> {
                   children: [
                     Padding(
                       padding: EdgeInsets.symmetric(
-                          horizontal: 8, vertical: alturaTela * 0.05),
+                          horizontal: Responsive.isDesktop(context)
+                              ? alturaTela * 0.25
+                              : 8,
+                          vertical: alturaTela * 0.05),
                       child: SolicitationsTable(
                         matricula: widget.matricula,
                         moneyFormat: widget.moneyFormat,
@@ -85,7 +92,10 @@ class _SolicitationPageState extends State<SolicitationPage> {
                   children: [
                     Padding(
                       padding: EdgeInsets.symmetric(
-                          horizontal: 8, vertical: alturaTela * 0.05),
+                          horizontal: Responsive.isDesktop(context)
+                              ? alturaTela * 0.25
+                              : 8,
+                          vertical: alturaTela * 0.05),
                       child: SolicitationsTable(
                         matricula: widget.matricula,
                         moneyFormat: widget.moneyFormat,

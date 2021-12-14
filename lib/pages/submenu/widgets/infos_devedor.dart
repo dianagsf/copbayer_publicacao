@@ -1,10 +1,15 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:copbayer_app/model/proposta_model.dart';
+import 'package:copbayer_app/repositories/post_image_web.dart';
 import 'package:copbayer_app/repositories/quitacao_repository.dart';
+import 'package:copbayer_app/utils/responsive.dart';
 import 'package:copbayer_app/utils/storage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb; // verifica se tá na WEB
 
 class InfosDevedor extends StatefulWidget {
   final int matricula;
@@ -23,7 +28,7 @@ class InfosDevedor extends StatefulWidget {
     this.quitacaoPage,
     this.saldoDevedor,
     this.enviarComprovante,
-     this.valor,
+    this.valor,
     this.usarCapital,
     this.emprestimos,
   }) : super(key: key);
@@ -35,6 +40,11 @@ class _InfosDevedorState extends State<InfosDevedor> {
   File _image;
   final picker = ImagePicker();
   StorageService _storageService = StorageService();
+
+  //WEB
+  Uint8List _imageWeb;
+  FilePickerResult pickedFile;
+  ImagePostRepository imagePostRepository = ImagePostRepository();
 
   QuitacaoRepository quitacaoRepository = QuitacaoRepository();
 
@@ -68,13 +78,55 @@ class _InfosDevedorState extends State<InfosDevedor> {
     );
   }
 
+  /// WEB
+  Future getImageWeb() async {
+    pickedFile = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf']);
+
+    setState(
+      () {
+        if (pickedFile != null) {
+          _imageWeb = pickedFile.files.first.bytes;
+        } else {
+          print('Nenhuma imagem selecionada.');
+        }
+      },
+    );
+  }
+
+  handleDeleteImageWeb() {
+    setState(() {
+      _imageWeb = null;
+    });
+  }
+
+  _uploadComprovanteWeb() {
+    String extensaoArq = pickedFile.files.first.extension.toString();
+
+    if (_imageWeb != null) {
+      imagePostRepository.uploadImage(
+        _imageWeb,
+        widget.protocolo,
+        "comprovante",
+        "comprovanteQuitacao",
+        "quitacao",
+        extensaoArq,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final alturaTela =
         MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top;
 
-    if (widget.enviarComprovante != null && widget.enviarComprovante == true)
-      _uploadComprovante();
+    if (widget.enviarComprovante != null &&
+        widget.enviarComprovante == true &&
+        (_image != null || _imageWeb != null))
+      Responsive.isDesktop(context) || kIsWeb
+          ? _uploadComprovanteWeb()
+          : _uploadComprovante();
 
     return Column(
       children: [
@@ -85,7 +137,9 @@ class _InfosDevedorState extends State<InfosDevedor> {
                 child: Text(
                   "Obs.: Para acatarmos seu pedido de desligamento é necessário a quitação do seu saldo devedor.",
                   style: TextStyle(
-                    fontSize: alturaTela * 0.022,
+                    fontSize: Responsive.isDesktop(context)
+                        ? alturaTela * 0.025
+                        : alturaTela * 0.022,
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -96,7 +150,9 @@ class _InfosDevedorState extends State<InfosDevedor> {
           child: Text(
             "Realize a transferência no valor de ${widget.valor} para:",
             style: TextStyle(
-              fontSize: alturaTela * 0.02,
+              fontSize: Responsive.isDesktop(context)
+                  ? alturaTela * 0.025
+                  : alturaTela * 0.02,
             ),
           ),
         ),
@@ -222,9 +278,9 @@ class _InfosDevedorState extends State<InfosDevedor> {
                   Container(
                     margin: const EdgeInsets.only(left: 20),
                     alignment: Alignment.centerLeft,
-                    child: buildAnexoButton(context, getImage),
+                    child: buildAnexoButton(context, getImage, getImageWeb),
                   ),
-                  _image != null
+                  _image != null || _imageWeb != null
                       ? Padding(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 20, vertical: 15),
@@ -234,28 +290,39 @@ class _InfosDevedorState extends State<InfosDevedor> {
                                 margin: const EdgeInsets.only(bottom: 5),
                                 constraints: BoxConstraints(
                                     maxHeight: 60.0, maxWidth: 50.0),
-                                child: Image.file(
-                                  _image,
-                                  fit: BoxFit.cover,
-                                ),
+                                child: Responsive.isDesktop(context) || kIsWeb
+                                    ? SizedBox.shrink()
+                                    : Image.file(
+                                        _image,
+                                        fit: BoxFit.cover,
+                                      ),
                               ),
                               const SizedBox(width: 4.0),
-                              Expanded(
-                                child: Text("comprovante.jpg"),
-                              ),
+                              Responsive.isDesktop(context) || kIsWeb
+                                  ? Expanded(
+                                      child: Text(pickedFile != null
+                                          ? '${pickedFile.files.first.name}'
+                                          : 'Erro ao selecionar o documento. Tente novamente.'))
+                                  : Expanded(
+                                      child: Text("comprovante.jpg"),
+                                    ),
                               IconButton(
                                 icon: Icon(
                                   Icons.delete_forever_outlined,
                                   color: Colors.red,
                                 ),
-                                onPressed: handleDeleteImage,
+                                onPressed:
+                                    Responsive.isDesktop(context) || kIsWeb
+                                        ? handleDeleteImageWeb
+                                        : handleDeleteImage,
                               ),
                             ],
                           ),
                         )
                       : SizedBox.shrink(),
-                  Padding(
+                  Container(
                     padding: const EdgeInsets.all(20),
+                    alignment: Alignment.centerLeft,
                     child: Text(
                       "Obs.: Caso já tenha realizado o pagamento, mande uma foto do comprovante.",
                       style: TextStyle(
@@ -276,9 +343,10 @@ class _InfosDevedorState extends State<InfosDevedor> {
   }
 }
 
-Widget buildAnexoButton(BuildContext context, Function getImage) {
+Widget buildAnexoButton(
+    BuildContext context, Function getImage, Function getImageWeb) {
   return ElevatedButton.icon(
-    onPressed: getImage,
+    onPressed: Responsive.isDesktop(context) || kIsWeb ? getImageWeb : getImage,
     style: ElevatedButton.styleFrom(
       primary: Colors.blue,
       shape: RoundedRectangleBorder(

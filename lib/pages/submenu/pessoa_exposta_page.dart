@@ -1,6 +1,7 @@
 import 'package:copbayer_app/pages/submenu/widgets/dropdown_button.dart';
 import 'package:copbayer_app/repositories/pessoa_exposta_repository.dart';
 import 'package:copbayer_app/repositories/senha_repository.dart';
+import 'package:copbayer_app/utils/responsive.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_masked_text/flutter_masked_text.dart';
 import 'package:get/get.dart';
@@ -208,7 +209,7 @@ class _PessoaExpostaPageState extends State<PessoaExpostaPage> {
                           "data": DateTime.now().toString().substring(0, 19),
                         });
 
-                        Get.back();
+                        if (!Responsive.isDesktop(context)) Get.back();
                         Get.back();
                         Get.back();
                         Get.snackbar(
@@ -261,7 +262,9 @@ class _PessoaExpostaPageState extends State<PessoaExpostaPage> {
       ),
       body: SingleChildScrollView(
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 30),
+          padding: EdgeInsets.symmetric(
+              horizontal: Responsive.isDesktop(context) ? alturaTela * 0.4 : 30,
+              vertical: 30),
           width: double.infinity,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -453,9 +456,12 @@ class _PessoaExpostaPageState extends State<PessoaExpostaPage> {
               Container(
                 height: alturaTela * 0.055, //45,
                 width: MediaQuery.of(context).size.width * 0.73,
+                padding: EdgeInsets.symmetric(
+                    horizontal:
+                        Responsive.isDesktop(context) ? alturaTela * 0.5 : 10),
                 child: ElevatedButton(
                   onPressed: () {
-                    if (formKey.currentState.validate() && selectedRadio != 0) {
+                    if (formKey.currentState.validate()) {
                       handlePessoaExposta();
                     }
                   },

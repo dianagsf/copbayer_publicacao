@@ -11,6 +11,7 @@ import 'package:copbayer_app/pages/submenu/widgets/infos_devedor.dart';
 import 'package:copbayer_app/pages/submenu/widgets/solicitar_button.dart';
 import 'package:copbayer_app/repositories/desligamento_repository.dart';
 import 'package:copbayer_app/utils/format_money.dart';
+import 'package:copbayer_app/utils/responsive.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -120,7 +121,11 @@ class _DesligamentoPageState extends State<DesligamentoPage> {
                 ),
                 body: SingleChildScrollView(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 50),
+                    padding: EdgeInsets.symmetric(
+                        horizontal: Responsive.isDesktop(context)
+                            ? alturaTela * 0.4
+                            : 20,
+                        vertical: 50),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -199,6 +204,7 @@ class _DesligamentoPageState extends State<DesligamentoPage> {
                                   Container(
                                     margin: const EdgeInsets.only(
                                         left: 15, right: 10),
+                                    alignment: Alignment.centerLeft,
                                     child: Text(
                                       "ou entre em contato com a Copbayer para o pagamento da diferença:",
                                       style: TextStyle(
@@ -281,7 +287,11 @@ class _DesligamentoPageState extends State<DesligamentoPage> {
                           height: alturaTela * 0.11, //90,
                         ),
                         Container(
-                          padding: EdgeInsets.only(left: 50, right: 50),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: Responsive.isDesktop(context)
+                                ? alturaTela * 0.07
+                                : 50,
+                          ),
                           child: SolicitarButton(
                             handleSolicitar: handleDesligamento,
                             matricula: widget.matricula,

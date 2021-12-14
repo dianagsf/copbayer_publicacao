@@ -3,6 +3,7 @@ import 'package:copbayer_app/controllers/solicitacoes_pendentes_controller.dart'
 import 'package:copbayer_app/model/solic_pendentes_model.dart';
 import 'package:copbayer_app/model/solicitacao_model.dart';
 import 'package:copbayer_app/utils/format_money.dart';
+import 'package:copbayer_app/utils/responsive.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -96,7 +97,9 @@ Widget _buildTable(
   BuildContext context,
   List<SolicPendentesModel> solicPendentes,
 ) {
-  final larguraColuna = MediaQuery.of(context).size.width * 0.23;
+  final larguraColuna = Responsive.isDesktop(context)
+      ? MediaQuery.of(context).size.width * 0.1
+      : MediaQuery.of(context).size.width * 0.23;
   List<dynamic> listaSolic;
 
   if (solicitacoesList != null) {
@@ -137,7 +140,7 @@ Widget _buildTable(
                         child: Text(
                           value,
                           style: TextStyle(
-                              fontSize: alturaTela * 0.018, //16.0,
+                              // fontSize: alturaTela * 0.018, //16.0,
                               color: Colors.black87,
                               fontWeight: FontWeight.w600),
                         ),
@@ -234,7 +237,7 @@ _buildTableRow(String values, Color colorRow, double alturaTela, String status,
                   child: Text(
                     value,
                     style: TextStyle(
-                        fontSize: alturaTela * 0.016, //12.5,
+                        //fontSize: alturaTela * 0.016, //12.5,
                         color: colorRow,
                         fontWeight: FontWeight.w600),
                   ),
@@ -272,7 +275,7 @@ _buildTableRow(String values, Color colorRow, double alturaTela, String status,
                     child: Text(
                       'em análise',
                       style: TextStyle(
-                        fontSize: alturaTela * 0.016,
+                        // fontSize: alturaTela * 0.016,
                         color: colorRow,
                         fontWeight: FontWeight.w600,
                       ),

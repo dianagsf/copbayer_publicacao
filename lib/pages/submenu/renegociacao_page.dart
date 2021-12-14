@@ -7,6 +7,7 @@ import 'package:copbayer_app/pages/submenu/quitacao_page.dart';
 import 'package:copbayer_app/repositories/renegociacao_repository.dart';
 import 'package:copbayer_app/repositories/senha_repository.dart';
 import 'package:copbayer_app/utils/format_money.dart';
+import 'package:copbayer_app/utils/responsive.dart';
 import 'package:copbayer_app/widgets/table/propostas.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -244,7 +245,8 @@ class _RenegociacaoPageState extends State<RenegociacaoPage> {
                                     "numero": protocolo,
                                   });
 
-                                  Get.back();
+                                  if (!Responsive.isDesktop(context))
+                                    Get.back();
                                   Get.back();
                                   Get.back();
                                   Get.back();
@@ -380,7 +382,10 @@ class _RenegociacaoPageState extends State<RenegociacaoPage> {
                         alturaTela,
                       ),
                       Padding(
-                        padding: const EdgeInsets.all(20.0),
+                        padding: Responsive.isDesktop(context)
+                            ? EdgeInsets.symmetric(
+                                horizontal: alturaTela * 0.3, vertical: 20)
+                            : const EdgeInsets.all(20.0),
                         child: Card(
                           elevation: 5,
                           child: Container(
@@ -439,8 +444,9 @@ class _RenegociacaoPageState extends State<RenegociacaoPage> {
                       saldoDevedor <= saldoCapital - 48.0
                           ? Container(
                               child: ElevatedButton.icon(
-                                onPressed: () => Get.to(() => 
-                                  QuitacaoPage(matricula: widget.matricula),
+                                onPressed: () => Get.to(
+                                  () =>
+                                      QuitacaoPage(matricula: widget.matricula),
                                 ),
                                 style: ElevatedButton.styleFrom(
                                   shape: RoundedRectangleBorder(
@@ -459,8 +465,10 @@ class _RenegociacaoPageState extends State<RenegociacaoPage> {
                           : SizedBox.shrink(),
                       saldoDevedor >= saldoCapital - 48.0
                           ? Container(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 20),
+                              padding: Responsive.isDesktop(context)
+                                  ? EdgeInsets.symmetric(
+                                      horizontal: alturaTela * 0.3)
+                                  : const EdgeInsets.symmetric(horizontal: 20),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
@@ -558,6 +566,10 @@ class _RenegociacaoPageState extends State<RenegociacaoPage> {
                               margin: const EdgeInsets.symmetric(vertical: 15),
                               height: alturaTela * 0.055, //45,
                               width: MediaQuery.of(context).size.width * 0.73,
+                              padding: Responsive.isDesktop(context)
+                                  ? EdgeInsets.symmetric(
+                                      horizontal: alturaTela * 0.5)
+                                  : EdgeInsets.zero,
                               child: ElevatedButton(
                                 onPressed: handleRenegociacao,
                                 style: ElevatedButton.styleFrom(
@@ -567,12 +579,14 @@ class _RenegociacaoPageState extends State<RenegociacaoPage> {
                                     side: BorderSide(color: Colors.green[300]),
                                   ),
                                 ),
-                                child: Text(
-                                  "Solicitar Renegociação",
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: alturaTela * 0.025,
-                                      fontWeight: FontWeight.w500),
+                                child: FittedBox(
+                                  child: Text(
+                                    "Solicitar Renegociação",
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: alturaTela * 0.025,
+                                        fontWeight: FontWeight.w500),
+                                  ),
                                 ),
                               ),
                             )

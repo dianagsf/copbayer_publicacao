@@ -81,7 +81,12 @@ Widget _buidTablePropostas(
                   ? const EdgeInsets.only(left: 15)
                   : EdgeInsets.zero,
               alignment: Alignment.center,
-              child: Text(header),
+              child: Text(
+                header,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
         )
