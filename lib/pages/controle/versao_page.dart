@@ -14,7 +14,7 @@ class _NovaVersaoPageState extends State<NovaVersaoPage> {
     _launchURL() async {
       var url = Platform.isAndroid
           ? 'https://play.google.com/store/apps/details?id=com.copbayer_app'
-          : 'https://www.apple.com/br/app-store/';
+          : 'https://apps.apple.com/us/app/copbayer/id1590404278';
       if (await canLaunch(url)) {
         await launch(url);
       } else {

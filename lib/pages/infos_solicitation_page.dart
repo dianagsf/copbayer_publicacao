@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:copbayer_app/controllers/controleApp_controller.dart';
 import 'package:copbayer_app/controllers/fechamento_folha_controller.dart';
 import 'package:copbayer_app/repositories/post_image_web.dart';
 import 'package:copbayer_app/repositories/senha_repository.dart';
@@ -40,6 +41,8 @@ class InfosSolicitacaoPage extends StatefulWidget {
 }
 
 class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
+  ControleAppController _controleAppController = Get.find();
+
   String valorFinanciado;
 
   String valorDesconto;
@@ -48,6 +51,8 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
   double cetMes = 0.0;
   double cetAno = 0.0;
   double taxa = 2.0; //taxa de juros copbayer
+  double taxaIOF = 0.0;
+  double taxaFatorIOF = 0.0;
 
   String totalPagar;
 
@@ -140,7 +145,7 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
 
   double calculaIOF(double valorFinanciado) {
     double iofAdicional = 0.0;
-    double fatorIOF = 0.01118 / 100;
+    double fatorIOF = taxaFatorIOF / 100;
     double valorAmortizacao =
         (double.parse(widget.solicitacaoInfo[0]['solicitacao']) /
                 int.parse(widget.solicitacaoInfo[0]['parcela']))
@@ -251,7 +256,7 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
         double.parse(solicitacaoInfo[0]['solicitacao'])); //IOF ADICIONAL
 
     // CALCULO DO IOF
-    iof = ((0.38 / 100) * double.parse(solicitacaoInfo[0]['solicitacao']) +
+    iof = ((taxaIOF / 100) * double.parse(solicitacaoInfo[0]['solicitacao']) +
             iofAdicional)
         .toPrecision(2);
 
@@ -291,8 +296,8 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
           double.parse(((valorContrato * taxa / 100) + xam).toStringAsFixed(2));
 
       if (i == 1) {
-        xpr =
-            xpr + double.parse((valorContrato * 0.38 / 100).toStringAsFixed(2));
+        xpr = xpr +
+            double.parse((valorContrato * taxaIOF / 100).toStringAsFixed(2));
       }
 
       cetPrestacoes.add(xpr);
@@ -337,6 +342,8 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
   @override
   void initState() {
     super.initState();
+    taxaIOF = _controleAppController.controleAPP[0].taxaIOF; //0.38
+    taxaFatorIOF = _controleAppController.controleAPP[0].taxaFatorIOF; // 0.0082
     calculaValores(widget.solicitacaoInfo);
     cetMes = calculaCETMes();
     calculaCETAnual(cetMes);
