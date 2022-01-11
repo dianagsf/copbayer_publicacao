@@ -260,7 +260,7 @@ class _SimulationPageState extends State<SimulationPage> {
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   _buildTextField(
-                                      'Solicitação R\$ (VALOR LÍQUIDO PRETENDIDO)',
+                                      'Solicitação R\$ (VALOR FINANCIADO)',
                                       _solicPostController.controllerValor,
                                       false,
                                       validateTextField: _validateTextField),

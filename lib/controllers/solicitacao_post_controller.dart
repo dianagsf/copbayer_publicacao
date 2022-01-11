@@ -77,7 +77,7 @@ class SolicitacaoPostController extends GetxController {
         "pensao": _convertDouble(controllerPensao.text),
         "consignado": _convertDouble(controllerConsignado.text),
         //"anexos": qtdeAnexos,
-        "iof": 0.00,
+        //"iof": iof,
         //"prestacao":  prestacao,
         "valorcr": _convertDouble(controllerValor.text),
         //"utilizada": utilizada
