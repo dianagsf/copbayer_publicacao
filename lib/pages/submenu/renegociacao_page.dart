@@ -1,3 +1,4 @@
+import 'package:copbayer_app/controllers/controleApp_controller.dart';
 import 'package:copbayer_app/controllers/devedor_controller.dart';
 import 'package:copbayer_app/controllers/fechamento_folha_controller.dart';
 import 'package:copbayer_app/controllers/saldo_capital_controller.dart';
@@ -28,6 +29,7 @@ class _RenegociacaoPageState extends State<RenegociacaoPage> {
   final TextEditingController senhaController = TextEditingController();
 
   final FechamentoFolhaController fechamentoFolhaController = Get.find();
+  final ControleAppController _controleAppController = Get.find();
   final SenhaRepository senhaRepository = SenhaRepository();
 
   RenegociacaoPostRepository renegociacaoPostRepository =
@@ -38,6 +40,12 @@ class _RenegociacaoPageState extends State<RenegociacaoPage> {
   bool totalReceber = false;
   double saldoDevedor = 0.0;
   double saldoCapital = 0.0;
+  double saldoCapitalDisp = 0.0;
+  double deixarSaldo = 0.0;
+  double valorDesconto = 0.0;
+
+  double taxa = 0.0; //taxa copbayer 2%
+
   TextEditingController parcelasController = TextEditingController();
 
   int protocolo;
@@ -45,6 +53,9 @@ class _RenegociacaoPageState extends State<RenegociacaoPage> {
   @override
   void initState() {
     super.initState();
+
+    taxa =
+        double.parse(_controleAppController.controleAPP[0].taxaEmp.toString());
 
     if (saldoDevedorController.saldoDevedor[0].devedor != null) {
       isDevedor = true;
@@ -60,6 +71,14 @@ class _RenegociacaoPageState extends State<RenegociacaoPage> {
         ? double.parse(saldoCapitalController.saldoCapital[0].saldo)
         : 0.0;
 
+    deixarSaldo = double.parse(
+        fechamentoFolhaController.fechamentoFolha[0].faixaA.toString());
+
+    saldoCapitalDisp = saldoCapitalController.saldoCapital[0].saldo != null
+        ? double.parse(saldoCapitalController.saldoCapital[0].saldo) -
+            deixarSaldo
+        : 0.0;
+
     var data = DateTime.now().toString().substring(0, 19);
 
     var codigo = widget.matricula.toString() + " " + data;
@@ -72,27 +91,51 @@ class _RenegociacaoPageState extends State<RenegociacaoPage> {
     });
   }
 
+  double calculaDesconto(double valorFinanciado) {
+    var now = DateTime.now();
+
+    var ultimoDiaMes;
+    var dataCredito = DateTime(now.year, now.month, now.day)
+        .add(Duration(days: 1)); //DIA SEGUINTE
+    var dataPrimeiraPrestacao;
+    var fimmes = fechamentoFolhaController.fechamentoFolha[0].fimmes;
+
+    if (fimmes == 0) {
+      ultimoDiaMes = DateTime(now.year, now.month + 1, 0).day;
+      dataPrimeiraPrestacao = DateTime(now.year, now.month, ultimoDiaMes);
+    } else {
+      ultimoDiaMes = DateTime(now.year, now.month + 2, 0).day;
+      dataPrimeiraPrestacao = DateTime(now.year, now.month + 1, ultimoDiaMes);
+    }
+
+    double taxaJuros = taxa / 100;
+    double saldo = valorFinanciado;
+    int np = int.parse(parcelasController.text);
+    double amortizacao = (saldo / np);
+    double jurosTotal = 0.0;
+    double j = 0.0;
+    int dias = dataPrimeiraPrestacao.difference(dataCredito).inDays;
+
+    for (int i = 1; i <= np; i++) {
+      if (i == 1) {
+        j = (((valorFinanciado * taxaJuros) / 30) * dias).toPrecision(2);
+      } else {
+        saldo = saldo - amortizacao;
+
+        j = (saldo * taxaJuros).toPrecision(2);
+      }
+
+      jurosTotal = jurosTotal + j;
+    }
+
+    jurosTotal = (jurosTotal / np).toPrecision(2);
+
+    return (amortizacao + jurosTotal).toPrecision(2);
+  }
+
   handleRenegociacao() {
-    /*if (selectedRadio == 0) {
-      Get.dialog(
-        AlertDialog(
-          title: Text("Atenção!"),
-          content: Text(
-            "Informe se deseja usar o saldo devedor para renegociação.",
-            style: TextStyle(fontSize: 18),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: Text(
-                'OK',
-                style: TextStyle(fontSize: 18),
-              ),
-            )
-          ],
-        ),
-      );
-    }*/
+    valorDesconto = calculaDesconto(total);
+
     if (parcelasController.text.isBlank) {
       Get.dialog(
         AlertDialog(
@@ -118,79 +161,103 @@ class _RenegociacaoPageState extends State<RenegociacaoPage> {
         AlertDialog(
           title: Text("Informações sobre a renegociação"),
           content: Container(
-            height: 200,
+            height: 300,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                Row(
-                  children: [
-                    Text(
-                      "Uso do saldo capital: ",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
+                Expanded(
+                  child: Row(
+                    children: [
+                      Text(
+                        "Uso do saldo capital: ",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
                       ),
-                    ),
-                    Text(
-                      "Sim",
-                      style: TextStyle(fontSize: 18),
-                    )
-                  ],
+                      Text(
+                        "Sim",
+                        style: TextStyle(fontSize: 18),
+                      )
+                    ],
+                  ),
                 ),
-                Row(
-                  children: [
-                    Text(
-                      "Total a pagar: ",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
+                Expanded(
+                  child: Row(
+                    children: [
+                      Text(
+                        "Total a pagar: ",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
                       ),
-                    ),
-                    Text(
-                      money.formatterMoney(total),
-                      /* selectedRadio == 1
-                          ? money.formatterMoney(total)
-                          : money.formatterMoney(saldoDevedor),*/
-                      style: TextStyle(
-                        fontSize: 18,
-                      ),
-                    )
-                  ],
+                      Text(
+                        money.formatterMoney((valorDesconto *
+                            int.parse(parcelasController.text))),
+                        style: TextStyle(
+                          fontSize: 18,
+                        ),
+                      )
+                    ],
+                  ),
                 ),
-                Row(
-                  children: [
-                    Text(
-                      "Número de parcelas: ",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
+                Expanded(
+                  child: Row(
+                    children: [
+                      Text(
+                        "Número de parcelas: ",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
                       ),
-                    ),
-                    Text(
-                      "${parcelasController.text}",
-                      style: TextStyle(
-                        fontSize: 18,
+                      Text(
+                        "${parcelasController.text}",
+                        style: TextStyle(
+                          fontSize: 18,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-                Row(
-                  children: [
-                    Text(
-                      "Parcelas: ",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
+                Expanded(
+                  child: Row(
+                    children: [
+                      Text(
+                        "Parcelas: ",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
                       ),
-                    ),
-                    Text(
-                      "${parcelasController.text} x ${selectedRadio == 1 ? money.formatterMoney(total / int.parse(parcelasController.text)) : money.formatterMoney(saldoDevedor / int.parse(parcelasController.text))}",
-                      style: TextStyle(
-                        fontSize: 18,
+                      Text(
+                        "${parcelasController.text} x ${money.formatterMoney(valorDesconto)}",
+                        style: TextStyle(
+                          fontSize: 18,
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Text(
+                        "Taxa Juros: ",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
                       ),
-                    )
-                  ],
+                      Text(
+                        "$taxa%",
+                        style: TextStyle(
+                          fontSize: 18,
+                        ),
+                      )
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -207,82 +274,108 @@ class _RenegociacaoPageState extends State<RenegociacaoPage> {
               onPressed: () {
                 Get.dialog(
                   AlertDialog(
-                    title: Text("Confirme sua senha"),
-                    content: TextField(
-                      controller: senhaController,
-                      keyboardType: TextInputType.number,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.lock_outline),
-                        border: OutlineInputBorder(),
+                    title: Text("Atenção!"),
+                    content: Text(
+                      "Os valores podem variar de acordo com as condições da data de liberação e vencimento das prestações.",
+                      style: TextStyle(
+                        fontStyle: FontStyle.italic,
                       ),
                     ),
                     actions: [
-                      FutureBuilder(
-                        future: senhaRepository.getSenha(widget.matricula),
-                        builder: (context, snapshot) {
-                          if (snapshot.hasData) {
-                            return TextButton(
-                              onPressed: () {
-                                if (senhaController.text
-                                        .compareTo(snapshot.data[0].senha) ==
-                                    0) {
-                                  Future.delayed(Duration(seconds: 20));
-                                  //SALVA SOLICITAÇÃO
+                      TextButton(
+                        onPressed: () {
+                          Get.back();
+                          Get.dialog(
+                            AlertDialog(
+                              title: Text("Confirme sua senha"),
+                              content: TextField(
+                                controller: senhaController,
+                                keyboardType: TextInputType.number,
+                                obscureText: true,
+                                decoration: InputDecoration(
+                                  prefixIcon: Icon(Icons.lock_outline),
+                                  border: OutlineInputBorder(),
+                                ),
+                              ),
+                              actions: [
+                                FutureBuilder(
+                                  future: senhaRepository
+                                      .getSenha(widget.matricula),
+                                  builder: (context, snapshot) {
+                                    if (snapshot.hasData) {
+                                      return TextButton(
+                                        onPressed: () {
+                                          if (senhaController.text.compareTo(
+                                                  snapshot.data[0].senha) ==
+                                              0) {
+                                            Future.delayed(
+                                                Duration(seconds: 20));
+                                            //SALVA SOLICITAÇÃO
 
-                                  renegociacaoPostRepository.saveRenegociacao({
-                                    "matricula": widget.matricula,
-                                    "data": DateTime.now()
-                                        .toString()
-                                        .substring(0, 19),
-                                    "usarCapital":
-                                        'S', //selectedRadio == 1 ? 'S' : 'N',
-                                    "devedor":
-                                        total, //selectedRadio == 1 ? total : saldoDevedor,
-                                    "np": int.parse(parcelasController.text),
-                                    "parcela": saldoDevedor /
-                                        int.parse(parcelasController.text),
-                                    "numero": protocolo,
-                                  });
+                                            renegociacaoPostRepository
+                                                .saveRenegociacao({
+                                              "matricula": widget.matricula,
+                                              "data": DateTime.now()
+                                                  .toString()
+                                                  .substring(0, 19),
+                                              "usarCapital":
+                                                  'S', //selectedRadio == 1 ? 'S' : 'N',
+                                              "devedor": valorDesconto *
+                                                  int.parse(parcelasController
+                                                      .text), //selectedRadio == 1 ? total : saldoDevedor,
+                                              "np": int.parse(
+                                                  parcelasController.text),
+                                              "parcela": valorDesconto,
+                                              "numero": protocolo,
+                                            });
 
-                                  if (!Responsive.isDesktop(context))
-                                    Get.back();
-                                  Get.back();
-                                  Get.back();
-                                  Get.back();
-                                  Get.snackbar(
-                                    "Sua solicitação foi enviada com sucesso!",
-                                    "Em breve entraremos em contato.",
-                                    backgroundColor: Colors.green,
-                                    colorText: Colors.white,
-                                    padding: EdgeInsets.all(30),
-                                    snackPosition: SnackPosition.BOTTOM,
-                                    duration: Duration(seconds: 4),
-                                  );
-                                } else {
-                                  Get.back();
+                                            if (!Responsive.isDesktop(context))
+                                              Get.back();
 
-                                  Get.snackbar(
-                                    "Senha incorreta!",
-                                    "Tente novamente.",
-                                    backgroundColor: Colors.red,
-                                    colorText: Colors.white,
-                                    padding: EdgeInsets.all(30),
-                                    snackPosition: SnackPosition.BOTTOM,
-                                    duration: Duration(seconds: 4),
-                                  );
+                                            Get.back();
+                                            Get.back();
+                                            Get.back();
+                                            Get.snackbar(
+                                              "Sua solicitação foi enviada com sucesso!",
+                                              "Em breve entraremos em contato.",
+                                              backgroundColor: Colors.green,
+                                              colorText: Colors.white,
+                                              padding: EdgeInsets.all(30),
+                                              snackPosition:
+                                                  SnackPosition.BOTTOM,
+                                              duration: Duration(seconds: 4),
+                                            );
+                                          } else {
+                                            Get.back();
 
-                                  setState(() {
-                                    senhaController.text = '';
-                                  });
-                                }
-                              },
-                              child: Text("CONFIRMAR"),
-                            );
-                          }
-                          return Container();
+                                            Get.snackbar(
+                                              "Senha incorreta!",
+                                              "Tente novamente.",
+                                              backgroundColor: Colors.red,
+                                              colorText: Colors.white,
+                                              padding: EdgeInsets.all(30),
+                                              snackPosition:
+                                                  SnackPosition.BOTTOM,
+                                              duration: Duration(seconds: 4),
+                                            );
+
+                                            setState(() {
+                                              senhaController.text = '';
+                                            });
+                                          }
+                                        },
+                                        child: Text("CONFIRMAR"),
+                                      );
+                                    }
+                                    return Container();
+                                  },
+                                )
+                              ],
+                            ),
+                          );
                         },
-                      )
+                        child: Text("OK"),
+                      ),
                     ],
                   ),
                 );
@@ -301,7 +394,7 @@ class _RenegociacaoPageState extends State<RenegociacaoPage> {
   String calculaTotalQuitacao() {
     if (saldoDevedor > saldoCapital) {
       // setState(() {
-      total = saldoDevedor - (saldoCapital - 48.0);
+      total = saldoDevedor - saldoCapitalDisp;
       // });
     } else {
       //setState(() {
@@ -310,7 +403,7 @@ class _RenegociacaoPageState extends State<RenegociacaoPage> {
       } else {
         totalReceber = false;
       }
-      total = (saldoCapital - 48.0) - saldoDevedor;
+      total = saldoCapitalDisp - saldoDevedor;
       //});
     }
 
@@ -362,11 +455,8 @@ class _RenegociacaoPageState extends State<RenegociacaoPage> {
                       const SizedBox(height: 80),
                       buildCardInfo(
                         Icons.attach_money,
-                        "Saldo Capital",
-                        money.formatterMoney(
-                          double.parse(
-                              saldoCapitalController.saldoCapital[0].saldo),
-                        ),
+                        "Saldo Capital Disponível",
+                        money.formatterMoney(saldoCapitalDisp),
                         Colors.blue,
                         alturaTela,
                       ),
@@ -395,7 +485,7 @@ class _RenegociacaoPageState extends State<RenegociacaoPage> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  saldoDevedor <= saldoCapital - 48.0
+                                  saldoDevedor <= saldoCapitalDisp
                                       ? "Total"
                                       : "Total a pagar",
                                   style: TextStyle(
@@ -429,7 +519,7 @@ class _RenegociacaoPageState extends State<RenegociacaoPage> {
                           ),
                         ),
                       ),
-                      saldoDevedor <= saldoCapital - 48.0
+                      saldoDevedor <= saldoCapitalDisp
                           ? Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 20, vertical: 30),
@@ -441,7 +531,7 @@ class _RenegociacaoPageState extends State<RenegociacaoPage> {
                               ),
                             )
                           : SizedBox.shrink(),
-                      saldoDevedor <= saldoCapital - 48.0
+                      saldoDevedor <= saldoCapitalDisp
                           ? Container(
                               child: ElevatedButton.icon(
                                 onPressed: () => Get.to(
@@ -463,7 +553,7 @@ class _RenegociacaoPageState extends State<RenegociacaoPage> {
                               ),
                             )
                           : SizedBox.shrink(),
-                      saldoDevedor >= saldoCapital - 48.0
+                      saldoDevedor >= saldoCapitalDisp
                           ? Container(
                               padding: Responsive.isDesktop(context)
                                   ? EdgeInsets.symmetric(
@@ -561,7 +651,8 @@ class _RenegociacaoPageState extends State<RenegociacaoPage> {
                       usarCapital: selectedRadio == 1 ? 'S' : 'N',
                     )
                   : */
-                      saldoDevedor >= saldoCapital - 48.0
+
+                      saldoDevedor >= saldoCapitalDisp
                           ? Container(
                               margin: const EdgeInsets.symmetric(vertical: 15),
                               height: alturaTela * 0.055, //45,

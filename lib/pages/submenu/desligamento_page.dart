@@ -1,5 +1,6 @@
 import 'package:copbayer_app/controllers/data_controller.dart';
 import 'package:copbayer_app/controllers/devedor_controller.dart';
+import 'package:copbayer_app/controllers/fechamento_folha_controller.dart';
 import 'package:copbayer_app/controllers/motivos_controller.dart';
 import 'package:copbayer_app/controllers/proposta_controller.dart';
 import 'package:copbayer_app/controllers/saldo_capital_controller.dart';
@@ -34,6 +35,7 @@ class _DesligamentoPageState extends State<DesligamentoPage> {
   final PropostaController propostaController = Get.find();
   final SaldoCapitalController saldoCapitalController = Get.find();
   final SaldoDevedorController saldoDevedorController = Get.find();
+  final FechamentoFolhaController fechamentoFolhaController = Get.find();
 
   final TextEditingController observacaoController = TextEditingController();
 
@@ -50,6 +52,9 @@ class _DesligamentoPageState extends State<DesligamentoPage> {
   var saldo;
   bool enviarComprovante = false;
 
+  double saldoCapitalDisp = 0.0;
+  double deixarSaldo = 0.0;
+
   int protocolo;
   bool limite;
 
@@ -65,9 +70,19 @@ class _DesligamentoPageState extends State<DesligamentoPage> {
         ? double.parse(saldoCapitalController.saldoCapital[0].saldo)
         : 0.0;
 
+    deixarSaldo = double.parse(
+        fechamentoFolhaController.fechamentoFolha[0].faixaA.toString());
+
+    saldoCapitalDisp = saldoCapitalController.saldoCapital[0].saldo != null
+        ? double.parse(saldoCapitalController.saldoCapital[0].saldo) -
+            deixarSaldo
+        : 0.0;
+
     devedor != null ? isDevedor = true : isDevedor = false;
 
-    isDevedor ? total = (devedor - saldo).abs() : total = saldo;
+    isDevedor
+        ? total = (devedor - saldoCapitalDisp).abs()
+        : total = saldoCapitalDisp;
 
     var data = DateTime.now().toString().substring(0, 19);
     var codigo = widget.matricula.toString() + " " + data;
@@ -131,11 +146,8 @@ class _DesligamentoPageState extends State<DesligamentoPage> {
                       children: [
                         buildCardInfo(
                           Icons.attach_money,
-                          "Saldo Capital",
-                          money.formatterMoney(
-                            double.parse(
-                                saldoCapitalController.saldoCapital[0].saldo),
-                          ),
+                          "Saldo Capital Disponível",
+                          money.formatterMoney(saldoCapitalDisp),
                           Colors.blue,
                           alturaTela,
                         ),

@@ -1,5 +1,6 @@
 import 'package:copbayer_app/controllers/data_controller.dart';
 import 'package:copbayer_app/controllers/faixa_capital_controller.dart';
+import 'package:copbayer_app/controllers/fechamento_folha_controller.dart';
 import 'package:copbayer_app/controllers/retirada_capital_controller.dart';
 import 'package:copbayer_app/controllers/saldo_capital_controller.dart';
 import 'package:copbayer_app/model/data_model.dart';
@@ -25,12 +26,16 @@ class RetiradaCapital extends StatefulWidget {
 class _RetiradaCapitalState extends State<RetiradaCapital> {
   final SaldoCapitalController saldoCapitalController = Get.find();
   final FaixaCapitalController faixaCapitalController = Get.find();
+  final FechamentoFolhaController fechamentoFolhaController = Get.find();
 
   final RetiradaCapitalController retiradaCapitalController =
       Get.put(RetiradaCapitalController());
 
   final SaldoDevedorRepository saldoDevedorRepository =
       SaldoDevedorRepository();
+
+  double saldoCapitalDisp = 0.0;
+  double deixarSaldo = 0.0;
 
   FormatMoney money = FormatMoney();
 
@@ -39,6 +44,19 @@ class _RetiradaCapitalState extends State<RetiradaCapital> {
   String dataHoje = DateTime.now().toString().substring(0, 10);
   var datasSolic;
   bool limite;
+
+  @override
+  void initState() {
+    super.initState();
+
+    deixarSaldo = double.parse(
+        fechamentoFolhaController.fechamentoFolha[0].faixaA.toString());
+
+    saldoCapitalDisp = saldoCapitalController.saldoCapital[0].saldo != null
+        ? double.parse(saldoCapitalController.saldoCapital[0].saldo) -
+            deixarSaldo
+        : 0.0;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +87,12 @@ class _RetiradaCapitalState extends State<RetiradaCapital> {
                     child: Column(
                       children: [
                         buildCardSaldo(
-                            saldoCapitalController, money, alturaTela, context),
+                          saldoCapitalController,
+                          money,
+                          alturaTela,
+                          context,
+                          saldoCapitalDisp,
+                        ),
                         SizedBox(
                           height: alturaTela * 0.11, //90,
                         ),
@@ -127,8 +150,13 @@ class _RetiradaCapitalState extends State<RetiradaCapital> {
   }
 }
 
-Widget buildCardSaldo(SaldoCapitalController saldoCapitalController,
-    FormatMoney money, double alturaTela, BuildContext context) {
+Widget buildCardSaldo(
+  SaldoCapitalController saldoCapitalController,
+  FormatMoney money,
+  double alturaTela,
+  BuildContext context,
+  double saldoCapitalDisp,
+) {
   return Container(
     padding: Responsive.isDesktop(context)
         ? EdgeInsets.symmetric(horizontal: alturaTela * 0.6, vertical: 20)
@@ -150,7 +178,7 @@ Widget buildCardSaldo(SaldoCapitalController saldoCapitalController,
           Container(
             alignment: Alignment.center,
             child: Text(
-              "Saldo Capital",
+              "Saldo Capital Disponível",
               style: TextStyle(
                 color: Colors.white.withOpacity(0.9),
                 fontSize: alturaTela * 0.027,
@@ -158,10 +186,7 @@ Widget buildCardSaldo(SaldoCapitalController saldoCapitalController,
             ),
           ),
           Text(
-            saldoCapitalController.saldoCapital[0].saldo != null
-                ? money.formatterMoney(
-                    double.parse(saldoCapitalController.saldoCapital[0].saldo))
-                : "R\$ 0,00",
+            money.formatterMoney(saldoCapitalDisp),
             style: TextStyle(
               color: Colors.white,
               fontSize: alturaTela * 0.062,

@@ -42,6 +42,7 @@ class _NovaVersaoPageState extends State<NovaVersaoPage> {
                 flex: 3,
                 child: Container(
                   padding: const EdgeInsets.all(20),
+                  alignment: Alignment.center,
                   child: Text(
                     "Seu app está desatualizado! Baixe a nova versão para continuar.",
                     style: TextStyle(

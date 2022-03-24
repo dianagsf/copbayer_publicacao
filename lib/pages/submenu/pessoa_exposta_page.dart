@@ -4,6 +4,7 @@ import 'package:copbayer_app/repositories/senha_repository.dart';
 import 'package:copbayer_app/utils/responsive.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_masked_text/flutter_masked_text.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:get/get.dart';
 
 class PessoaExpostaPage extends StatefulWidget {
@@ -253,6 +254,14 @@ class _PessoaExpostaPageState extends State<PessoaExpostaPage> {
 
   @override
   Widget build(BuildContext context) {
+    _launchURL(String url) async {
+      if (await canLaunch(url)) {
+        await launch(url);
+      } else {
+        throw 'Não foi possível abrir $url';
+      }
+    }
+
     final alturaTela =
         MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top;
     return Scaffold(
@@ -445,6 +454,36 @@ class _PessoaExpostaPageState extends State<PessoaExpostaPage> {
                           )
                         : SizedBox.shrink(),
                   ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                "Em caso de dúvidas sobre a definição de Pessoa Politicamente Exposta, acesse o link:",
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 10),
+              Container(
+                margin: EdgeInsets.only(
+                  right: MediaQuery.of(context).size.width > 400
+                      ? Responsive.isDesktop(context)
+                          ? MediaQuery.of(context).size.width * 0.4
+                          : MediaQuery.of(context).size.width * 0.35
+                      : MediaQuery.of(context).size.width * 0.3,
+                ),
+                child: ElevatedButton.icon(
+                  onPressed: () => _launchURL("http://appcopbayer.com.br/ppe/"),
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30.0),
+                    ),
+                  ),
+                  icon: Icon(Icons.add),
+                  label: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      'Detalhes sobre PPE',
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 50),

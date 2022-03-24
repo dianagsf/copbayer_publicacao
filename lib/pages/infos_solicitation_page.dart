@@ -50,9 +50,10 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
   double iof = 0.0;
   double cetMes = 0.0;
   double cetAno = 0.0;
-  double taxa = 2.0; //taxa de juros copbayer
+  double taxa = 0.0; //taxa de juros copbayer
   double taxaIOF = 0.0;
   double taxaFatorIOF = 0.0;
+  double valorParcela = 0.0;
 
   String totalPagar;
 
@@ -171,8 +172,8 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
       dataPrimeiraPrestacao = DateTime(now.year, now.month + 1, ultimoDiaMes);
     }
 
-    int dias = dataPrimeiraPrestacao.difference(dataCredito).inDays + 1;
-    var taxaJuros = 2;
+    int dias = dataPrimeiraPrestacao.difference(dataCredito).inDays;
+    var taxaJuros = taxa;
     var saldo = 0.0;
     var xiof = 0.0;
     DateTime dataVencimento = DateTime.parse(dataPrimeiraPrestacao.toString());
@@ -221,7 +222,7 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
       dataPrimeiraPrestacao = DateTime(now.year, now.month + 1, ultimoDiaMes);
     }
 
-    double taxaJuros = 2 / 100;
+    double taxaJuros = taxa / 100;
     double saldo = valorSolicitado;
     int np = int.parse(widget.solicitacaoInfo[0]['parcela']);
     double amortizacao = (saldo / np);
@@ -252,6 +253,9 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
         calculaDesconto(double.parse(solicitacaoInfo[0]['solicitacao']))
             .toString();
 
+    valorParcela = double.parse(valorDesconto);
+    print("VALOR PARCELA = $valorParcela");
+
     double iofAdicional = calculaIOF(
         double.parse(solicitacaoInfo[0]['solicitacao'])); //IOF ADICIONAL
 
@@ -281,7 +285,6 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
     int parcelas = int.parse(widget.solicitacaoInfo[0]["parcela"]);
     double valorContrato = double.parse(valorLiquido);
     List<double> cetPrestacoes = [];
-    double taxa = 2.0;
 
     double xam = double.parse((valorContrato / parcelas).toStringAsFixed(2));
     double xpr;
@@ -342,8 +345,14 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
   @override
   void initState() {
     super.initState();
-    taxaIOF = _controleAppController.controleAPP[0].taxaIOF; //0.38
-    taxaFatorIOF = _controleAppController.controleAPP[0].taxaFatorIOF; // 0.0082
+    taxaIOF = double.parse(
+        _controleAppController.controleAPP[0].taxaIOF.toString()); //0.38
+    taxaFatorIOF = double.parse(_controleAppController
+        .controleAPP[0].taxaFatorIOF
+        .toString()); // 0.0082
+    taxa =
+        double.parse(_controleAppController.controleAPP[0].taxaEmp.toString());
+
     calculaValores(widget.solicitacaoInfo);
     cetMes = calculaCETMes();
     calculaCETAnual(cetMes);
@@ -399,6 +408,7 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
               ? _imagesWeb.length
               : _images.length,
           "iof": iof,
+          "prestacao": valorParcela,
         },
       );
 

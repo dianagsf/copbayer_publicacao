@@ -1,11 +1,10 @@
 import 'package:dio/dio.dart';
-//import 'package:shared_preferences/shared_preferences.dart';
 
 class CustomDio {
   var _dio;
 
   //http://54.207.211.41:3000
-  //http://192.168.0.107:3000
+  //http://192.168.0.105:3000
 
   CustomDio() {
     _dio = Dio(

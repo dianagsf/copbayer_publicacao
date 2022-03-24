@@ -387,6 +387,7 @@ Widget _buildMenu(
         UserAccountsDrawerHeader(
           accountName: Container(
             margin: const EdgeInsets.only(top: 15),
+            padding: const EdgeInsets.symmetric(vertical: 10),
             child: Text(
               nome,
               overflow: TextOverflow.visible,
@@ -394,7 +395,7 @@ Widget _buildMenu(
                   color: Responsive.isDesktop(context)
                       ? Colors.black
                       : Colors.white,
-                  fontSize: 18),
+                  fontSize: 15),
             ),
           ),
           accountEmail: Text(
@@ -411,7 +412,9 @@ Widget _buildMenu(
             image: DecorationImage(
               image: AssetImage("images/logoHome.png"),
               fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
+              alignment: Responsive.isDesktop(context)
+                  ? Alignment.topLeft
+                  : Alignment.centerLeft,
             ),
           ),
         ),

@@ -6,17 +6,15 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 void main() async {
   runApp(
     GetMaterialApp(
-        localizationsDelegates: [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate
-        ],
-        // Linguagem calendário data
-        supportedLocales: [
-          Locale("pt")
-        ],
-        debugShowCheckedModeBanner: false,
-        title: "Copbayer",
-        home: InitialPage() // LoginPage(), //InitialPage(), //LoginPage(),
-        ),
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate
+      ],
+      // Linguagem calendário data
+      supportedLocales: [Locale("pt")],
+      debugShowCheckedModeBanner: false,
+      title: "Copbayer",
+      home: InitialPage(),
+    ),
   );
 }

@@ -60,6 +60,9 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
   double totalQuitacao = 0.0;
   bool infosDevedor = false;
 
+  double saldoCapitalDisp = 0.0;
+  double deixarSaldo = 0.0;
+
   int protocolo;
 
   List<PropostaModel> selectedEmp = [];
@@ -86,6 +89,14 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
     } else {
       isDevedor = false;
     }
+
+    deixarSaldo = double.parse(
+        fechamentoFolhaController.fechamentoFolha[0].faixaA.toString());
+
+    saldoCapitalDisp = saldoCapitalController.saldoCapital[0].saldo != null
+        ? double.parse(saldoCapitalController.saldoCapital[0].saldo) -
+            deixarSaldo // 48,00
+        : 0.0;
 
     var data = DateTime.now().toString().substring(0, 19);
 
@@ -282,14 +293,30 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
                         //SALVA SOLICITAÇÃO
 
                         for (int i = 0; i < selectedEmp.length; i++) {
-                          quitacaoRepository.savePedidoQuitacao({
-                            "numero": protocolo,
-                            "data": DateTime.now().toString().substring(0, 19),
-                            "valor": selectedRadio == 1 ? totalQuitacao : total,
-                            "matricula": widget.matricula,
-                            "usarCapital": selectedRadio == 1 ? 'S' : 'N',
-                            "emprestimo": selectedEmp[i].numero,
-                          });
+                          if (i == 0) {
+                            quitacaoRepository.savePedidoQuitacao({
+                              "numero": protocolo,
+                              "data":
+                                  DateTime.now().toString().substring(0, 19),
+                              "valor":
+                                  selectedRadio == 1 ? totalQuitacao : total,
+                              "matricula": widget.matricula,
+                              "usarCapital": selectedRadio == 1 ? 'S' : 'N',
+                              "emprestimo": selectedEmp[i].numero,
+                              "unico": 1,
+                            });
+                          } else {
+                            quitacaoRepository.savePedidoQuitacao({
+                              "numero": protocolo,
+                              "data":
+                                  DateTime.now().toString().substring(0, 19),
+                              "valor":
+                                  selectedRadio == 1 ? totalQuitacao : total,
+                              "matricula": widget.matricula,
+                              "usarCapital": selectedRadio == 1 ? 'S' : 'N',
+                              "emprestimo": selectedEmp[i].numero,
+                            });
+                          }
                         }
 
                         Responsive.isDesktop(context) || kIsWeb
@@ -340,7 +367,8 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
 
   String calculaTotalQuitacao() {
     double saldoCapital =
-        double.parse(saldoCapitalController.saldoCapital[0].saldo);
+        double.parse(saldoCapitalController.saldoCapital[0].saldo) -
+            deixarSaldo; // 48,00
 
     if (total > saldoCapital) {
       totalQuitacao = total - saldoCapital;
@@ -435,11 +463,8 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
                     const SizedBox(height: 80),
                     buildCardInfo(
                       Icons.attach_money,
-                      "Saldo Capital",
-                      money.formatterMoney(
-                        double.parse(
-                            saldoCapitalController.saldoCapital[0].saldo),
-                      ),
+                      "Saldo Capital Disponível",
+                      money.formatterMoney(saldoCapitalDisp),
                       Colors.blue,
                       alturaTela,
                     ),
@@ -814,7 +839,12 @@ Widget _buidTableQuitacao(
 bool handleFechamentoFolha(List<FechamentoFolhaModel> fechamentoFolha) {
   var dataHoje = DateTime.now();
   var dataLimite = DateTime.parse(fechamentoFolha[0].datafechafolha)
-      .subtract(Duration(days: 3));
+      .subtract(Duration(days: 2));
+
+  print("DATA LIMITE = $dataLimite");
+
+  print(
+      "DATA FECHA FOLHA = ${DateTime.parse(fechamentoFolha[0].datafechafolha)}");
 
   if ((dataHoje.isAfter(dataLimite) &&
           dataHoje
