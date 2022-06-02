@@ -69,6 +69,8 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
   final picker = ImagePicker();
   StorageService _storageService = StorageService();
 
+  bool anexoGaleria = false;
+
   //WEB
   List<Uint8List> _imagesWeb = [];
   List<String> nomeAnexos = [];
@@ -86,6 +88,8 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
         print('Nenhuma imagem selecionada.');
       }
     });
+
+    Get.back();
   }
 
   _uploadImages() {
@@ -115,13 +119,19 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
     setState(
       () {
         if (pickedFile != null) {
-          _imagesWeb.add(pickedFile.files.last.bytes);
+          kIsWeb
+              ? _imagesWeb.add(pickedFile.files.last.bytes)
+              : _imagesWeb
+                  .add(File(pickedFile.files.single.path).readAsBytesSync());
+
           nomeAnexos.add(pickedFile.files.last.name);
         } else {
           print('Nenhuma imagem selecionada.');
         }
       },
     );
+
+    if (!kIsWeb) Get.back();
   }
 
   handleDeleteImageWeb(Uint8List img) {
@@ -132,6 +142,7 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
   }
 
   _uploadImagesWeb() {
+    print("IMAGES = ${_imagesWeb.length}");
     for (int i = 0; i < _imagesWeb.length; i++) {
       imagePostRepository.uploadImage(
         _imagesWeb[i],
@@ -139,9 +150,91 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
         "contracheque${i + 1}",
         "simulacaoEmprestimo",
         "emprestimo",
-        nomeAnexos[i].split('.')[1],
+        nomeAnexos[i].split('.')[nomeAnexos[i].split('.').length - 1],
       );
     }
+  }
+
+  escolherGaleriaFoto(Function getImage, Function getImageWeb) {
+    Get.dialog(
+      AlertDialog(
+        title: Text("Escolha uma forma de enviar o comprovante:"),
+        content: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 100,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        anexoGaleria = true;
+                      });
+                      getImageWeb();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      primary: Colors.pink,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30.0),
+                        side: BorderSide(color: Colors.pink),
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Icon(
+                          Icons.image_outlined,
+                          size: 25,
+                        ),
+                        Text(
+                          "Galeria",
+                          style: TextStyle(color: Colors.white, fontSize: 16.0),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Container(
+                  height: 100,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        anexoGaleria = false;
+                      });
+                      getImage();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      primary: Colors.blue,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30.0),
+                        side: BorderSide(color: Colors.blue),
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Icon(
+                          Icons.camera_alt_outlined,
+                          size: 25,
+                        ),
+                        Text(
+                          "Câmera",
+                          style: TextStyle(color: Colors.white, fontSize: 16.0),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              )
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   double calculaIOF(double valorFinanciado) {
@@ -187,12 +280,12 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
       saldo = valorFinanciado;
     }
 
-    for (int i = 0; i < np; i++) {
+    for (int i = 1; i <= np; i++) {
       diasIOF = dataVencimento.difference(dataCredito).inDays;
 
       if (diasIOF >= 365) diasIOF = 365;
 
-      xiof = valorAmortizacao * fatorIOF * diasIOF;
+      xiof = (valorAmortizacao * fatorIOF * diasIOF).toPrecision(2);
 
       iofAdicional = iofAdicional + xiof;
 
@@ -404,9 +497,8 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
       postSolic = _repositorySolicPost.createSolic(
         {
           ...widget.solicitacaoInfo[0],
-          "anexos": Responsive.isDesktop(context) || kIsWeb
-              ? _imagesWeb.length
-              : _images.length,
+          "anexos": (_images.isNotEmpty ? _images.length : 0) +
+              (_imagesWeb.isNotEmpty ? _imagesWeb.length : 0),
           "iof": iof,
           "prestacao": valorParcela,
         },
@@ -425,10 +517,8 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
       //VERIFICA QUANTIDADE ANEXOS APOSENTADO
       if (widget.situacao != null &&
           widget.situacao.compareTo('A') == 0 &&
-          (((!kIsWeb && _images.isEmpty) ||
-                  (_images.isNotEmpty && _images.length < 1)) ||
-              ((kIsWeb && _imagesWeb.isEmpty) ||
-                  (_imagesWeb.isNotEmpty && _imagesWeb.length < 1)))) {
+          ((_images.isEmpty && _imagesWeb.isEmpty) ||
+              (_images.length + _imagesWeb.length < 1))) {
         Get.dialog(
           AlertDialog(
             title: Text("Atenção!"),
@@ -451,11 +541,9 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
 
       //VERIFICA QUANTIDADE ANEXOS ASSOCIADO
       if (widget.situacao == null ||
-          widget.situacao.compareTo('A') != 0) if (((!kIsWeb &&
-                  _images.isEmpty) ||
-              (_images.isNotEmpty && _images.length < 3)) ||
-          ((kIsWeb && _imagesWeb.isEmpty) ||
-              (_imagesWeb.isNotEmpty && _imagesWeb.length < 3))) {
+          widget.situacao.compareTo('A') != 0) if ((_images.isEmpty &&
+              _imagesWeb.isEmpty) ||
+          (_images.length + _imagesWeb.length < 3)) {
         Get.dialog(
           AlertDialog(
             title: Text("Atenção!"),
@@ -479,11 +567,8 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
       //SALVA SOLIC APOSENTADO
       if (widget.situacao != null &&
           widget.situacao.compareTo("A") == 0 &&
-          ((_images.isNotEmpty && _images.length >= 1) ||
-              (_imagesWeb.isNotEmpty && _imagesWeb.length >= 1))) {
-        Responsive.isDesktop(context) || kIsWeb
-            ? _uploadImagesWeb()
-            : _uploadImages();
+          (_images.isNotEmpty || _imagesWeb.isNotEmpty) &&
+          (_images.length + _imagesWeb.length >= 1)) {
         Get.dialog(
           AlertDialog(
             title: Text("Confirme sua senha"),
@@ -507,7 +592,14 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
                                 .compareTo(snapshot.data[0].senha) ==
                             0) {
                           Future.delayed(Duration(seconds: 20));
-                          // VOLTAR PRA HOME
+                          ////UPLOAD ANEXOS!!!!
+                          if (_images.isNotEmpty && _imagesWeb.isNotEmpty) {
+                            _uploadImagesWeb();
+                            _uploadImages();
+                          } else if (_imagesWeb.isNotEmpty)
+                            _uploadImagesWeb();
+                          else if (_images.isNotEmpty) _uploadImages();
+                          //SALVA SOLICITAÇÃO!!
                           saveSolicitacao();
                         } else {
                           Get.back();
@@ -540,11 +632,8 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
 
       //SALVA SOLIC ASSOCIADO
       if (widget.situacao == null || widget.situacao.compareTo("A") != 0) {
-        if ((_images.isNotEmpty && _images.length >= 3) ||
-            (_imagesWeb.isNotEmpty && _imagesWeb.length >= 3)) {
-          Responsive.isDesktop(context) || kIsWeb
-              ? _uploadImagesWeb()
-              : _uploadImages();
+        if ((_images.isNotEmpty || _imagesWeb.isNotEmpty) &&
+            (_images.length + _imagesWeb.length >= 3)) {
           Get.dialog(
             AlertDialog(
               title: Text("Confirme sua senha"),
@@ -568,7 +657,14 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
                                   .compareTo(snapshot.data[0].senha) ==
                               0) {
                             Future.delayed(Duration(seconds: 20));
-                            // VOLTAR PRA HOME
+                            ////UPLOAD ANEXOS!!!!
+                            if (_images.isNotEmpty && _imagesWeb.isNotEmpty) {
+                              _uploadImagesWeb();
+                              _uploadImages();
+                            } else if (_imagesWeb.isNotEmpty)
+                              _uploadImagesWeb();
+                            else if (_images.isNotEmpty) _uploadImages();
+                            //SALVA SOLIC!!!!
                             saveSolicitacao();
                           } else {
                             Get.back();
@@ -638,7 +734,10 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Solicitação de empréstimo"),
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text("Solicitação de empréstimo"),
+        ),
         backgroundColor: Colors.green[300],
       ),
       body: SingleChildScrollView(
@@ -801,7 +900,8 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
                               onPressed: () {
                                 Responsive.isDesktop(context) || kIsWeb
                                     ? getImageWeb()
-                                    : getImage();
+                                    : escolherGaleriaFoto(
+                                        getImage, getImageWeb);
                               },
                               style: ElevatedButton.styleFrom(
                                 primary: Colors.blue,
@@ -846,52 +946,56 @@ class _InfosSolicitacaoPageState extends State<InfosSolicitacaoPage> {
                           ],
                         ),
                         const SizedBox(height: 10),
-                        if (Responsive.isDesktop(context) || kIsWeb)
-                          ..._imagesWeb.map((img) {
-                            return Row(
-                              children: [
-                                Expanded(
-                                  child: Text(pickedFile != null
-                                      ? "${nomeAnexos[_imagesWeb.indexOf(img)]}" //nome da cada um ????
-                                      : 'Erro ao selecionar o documento. Tente novamente.'),
-                                ),
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.delete_forever_outlined,
-                                    color: Colors.red,
-                                  ),
-                                  onPressed: () => handleDeleteImageWeb(img),
-                                )
-                              ],
-                            );
-                          }).toList()
-                        else
-                          ..._images.map((img) {
-                            return Row(
-                              children: [
-                                Container(
-                                  margin: const EdgeInsets.only(bottom: 5),
-                                  constraints: BoxConstraints(
-                                      maxHeight: 60.0, maxWidth: 50.0),
-                                  child: Image.file(
-                                    img,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                                const SizedBox(width: 4.0),
-                                Expanded(
-                                  child: Text("anexo.jpg"),
-                                ),
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.delete_forever_outlined,
-                                    color: Colors.red,
-                                  ),
-                                  onPressed: () => handleDeleteImage(img),
-                                )
-                              ],
-                            );
-                          }).toList(),
+                        if (_imagesWeb.isNotEmpty || _images.isNotEmpty)
+                          Column(
+                            children: [
+                              ..._imagesWeb.map((img) {
+                                return Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(pickedFile != null
+                                          ? "${nomeAnexos[_imagesWeb.indexOf(img)]}" //nome da cada um ????
+                                          : 'Erro ao selecionar o documento. Tente novamente.'),
+                                    ),
+                                    IconButton(
+                                      icon: Icon(
+                                        Icons.delete_forever_outlined,
+                                        color: Colors.red,
+                                      ),
+                                      onPressed: () =>
+                                          handleDeleteImageWeb(img),
+                                    )
+                                  ],
+                                );
+                              }).toList(),
+                              ..._images.map((img) {
+                                return Row(
+                                  children: [
+                                    Container(
+                                      margin: const EdgeInsets.only(bottom: 5),
+                                      constraints: BoxConstraints(
+                                          maxHeight: 60.0, maxWidth: 50.0),
+                                      child: Image.file(
+                                        img,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4.0),
+                                    Expanded(
+                                      child: Text("anexo.jpg"),
+                                    ),
+                                    IconButton(
+                                      icon: Icon(
+                                        Icons.delete_forever_outlined,
+                                        color: Colors.red,
+                                      ),
+                                      onPressed: () => handleDeleteImage(img),
+                                    )
+                                  ],
+                                );
+                              }).toList(),
+                            ],
+                          ),
                       ],
                     ),
                   ),

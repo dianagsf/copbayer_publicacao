@@ -9,6 +9,7 @@ import 'package:copbayer_app/utils/storage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:get/get.dart';
 import 'package:flutter/foundation.dart' show kIsWeb; // verifica se tá na WEB
 
 class InfosDevedor extends StatefulWidget {
@@ -41,6 +42,8 @@ class _InfosDevedorState extends State<InfosDevedor> {
   final picker = ImagePicker();
   StorageService _storageService = StorageService();
 
+  bool anexoGaleria = false;
+
   //WEB
   Uint8List _imageWeb;
   FilePickerResult pickedFile;
@@ -61,6 +64,8 @@ class _InfosDevedorState extends State<InfosDevedor> {
         }
       },
     );
+
+    Get.back();
   }
 
   handleDeleteImage() {
@@ -87,12 +92,16 @@ class _InfosDevedorState extends State<InfosDevedor> {
     setState(
       () {
         if (pickedFile != null) {
-          _imageWeb = pickedFile.files.first.bytes;
+          _imageWeb = kIsWeb
+              ? pickedFile.files.single.bytes
+              : File(pickedFile.files.single.path).readAsBytesSync();
         } else {
           print('Nenhuma imagem selecionada.');
         }
       },
     );
+
+    if (!kIsWeb) Get.back();
   }
 
   handleDeleteImageWeb() {
@@ -116,6 +125,88 @@ class _InfosDevedorState extends State<InfosDevedor> {
     }
   }
 
+  escolherGaleriaFoto(Function getImage, Function getImageWeb) {
+    Get.dialog(
+      AlertDialog(
+        title: Text("Escolha uma forma de enviar o comprovante:"),
+        content: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 100,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        anexoGaleria = true;
+                        getImageWeb();
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      primary: Colors.pink,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30.0),
+                        side: BorderSide(color: Colors.pink),
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Icon(
+                          Icons.image_outlined,
+                          size: 25,
+                        ),
+                        Text(
+                          "Galeria",
+                          style: TextStyle(color: Colors.white, fontSize: 16.0),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Container(
+                  height: 100,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        anexoGaleria = false;
+                        getImage();
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      primary: Colors.blue,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30.0),
+                        side: BorderSide(color: Colors.blue),
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Icon(
+                          Icons.camera_alt_outlined,
+                          size: 25,
+                        ),
+                        Text(
+                          "Câmera",
+                          style: TextStyle(color: Colors.white, fontSize: 16.0),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final alturaTela =
@@ -124,7 +215,7 @@ class _InfosDevedorState extends State<InfosDevedor> {
     if (widget.enviarComprovante != null &&
         widget.enviarComprovante == true &&
         (_image != null || _imageWeb != null))
-      Responsive.isDesktop(context) || kIsWeb
+      Responsive.isDesktop(context) || kIsWeb || anexoGaleria
           ? _uploadComprovanteWeb()
           : _uploadComprovante();
 
@@ -278,7 +369,12 @@ class _InfosDevedorState extends State<InfosDevedor> {
                   Container(
                     margin: const EdgeInsets.only(left: 20),
                     alignment: Alignment.centerLeft,
-                    child: buildAnexoButton(context, getImage, getImageWeb),
+                    child: buildAnexoButton(
+                      context,
+                      getImage,
+                      getImageWeb,
+                      escolherGaleriaFoto,
+                    ),
                   ),
                   _image != null || _imageWeb != null
                       ? Padding(
@@ -290,7 +386,9 @@ class _InfosDevedorState extends State<InfosDevedor> {
                                 margin: const EdgeInsets.only(bottom: 5),
                                 constraints: BoxConstraints(
                                     maxHeight: 60.0, maxWidth: 50.0),
-                                child: Responsive.isDesktop(context) || kIsWeb
+                                child: Responsive.isDesktop(context) ||
+                                        kIsWeb ||
+                                        anexoGaleria
                                     ? SizedBox.shrink()
                                     : Image.file(
                                         _image,
@@ -298,7 +396,9 @@ class _InfosDevedorState extends State<InfosDevedor> {
                                       ),
                               ),
                               const SizedBox(width: 4.0),
-                              Responsive.isDesktop(context) || kIsWeb
+                              Responsive.isDesktop(context) ||
+                                      kIsWeb ||
+                                      anexoGaleria
                                   ? Expanded(
                                       child: Text(pickedFile != null
                                           ? '${pickedFile.files.first.name}'
@@ -311,10 +411,11 @@ class _InfosDevedorState extends State<InfosDevedor> {
                                   Icons.delete_forever_outlined,
                                   color: Colors.red,
                                 ),
-                                onPressed:
-                                    Responsive.isDesktop(context) || kIsWeb
-                                        ? handleDeleteImageWeb
-                                        : handleDeleteImage,
+                                onPressed: Responsive.isDesktop(context) ||
+                                        kIsWeb ||
+                                        anexoGaleria
+                                    ? handleDeleteImageWeb
+                                    : handleDeleteImage,
                               ),
                             ],
                           ),
@@ -344,9 +445,17 @@ class _InfosDevedorState extends State<InfosDevedor> {
 }
 
 Widget buildAnexoButton(
-    BuildContext context, Function getImage, Function getImageWeb) {
+  BuildContext context,
+  Function getImage,
+  Function getImageWeb,
+  Function escolherGaleriaFoto,
+) {
   return ElevatedButton.icon(
-    onPressed: Responsive.isDesktop(context) || kIsWeb ? getImageWeb : getImage,
+    onPressed: () {
+      Responsive.isDesktop(context) || kIsWeb
+          ? getImageWeb()
+          : escolherGaleriaFoto(getImage, getImageWeb);
+    },
     style: ElevatedButton.styleFrom(
       primary: Colors.blue,
       shape: RoundedRectangleBorder(

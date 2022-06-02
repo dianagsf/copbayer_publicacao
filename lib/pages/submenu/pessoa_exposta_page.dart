@@ -266,7 +266,10 @@ class _PessoaExpostaPageState extends State<PessoaExpostaPage> {
         MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top;
     return Scaffold(
       appBar: AppBar(
-        title: Text("Pessoa Exposta"),
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text("Pessoa Exposta"),
+        ),
         backgroundColor: Colors.green[300],
       ),
       body: SingleChildScrollView(
@@ -481,7 +484,9 @@ class _PessoaExpostaPageState extends State<PessoaExpostaPage> {
                   label: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(
-                      'Detalhes sobre PPE',
+                      MediaQuery.of(context).size.width < 350
+                          ? 'Detalhes sobre\nPPE'
+                          : 'Detalhes sobre PPE',
                     ),
                   ),
                 ),

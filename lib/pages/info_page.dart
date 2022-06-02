@@ -17,9 +17,12 @@ class InfoPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          "Informações",
-          style: TextStyle(color: Colors.white),
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            "Informações",
+            style: TextStyle(color: Colors.white),
+          ),
         ),
         backgroundColor: Colors.green[300],
       ),

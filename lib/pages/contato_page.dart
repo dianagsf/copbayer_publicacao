@@ -16,9 +16,12 @@ class ContatoPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          "Fale Conosco",
-          style: TextStyle(color: Colors.white),
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            "Fale Conosco",
+            style: TextStyle(color: Colors.white),
+          ),
         ),
         backgroundColor: Colors.green[300],
       ),

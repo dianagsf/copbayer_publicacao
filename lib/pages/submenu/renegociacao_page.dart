@@ -421,7 +421,10 @@ class _RenegociacaoPageState extends State<RenegociacaoPage> {
             ? FechamentoFolhaPage()
             : Scaffold(
                 appBar: AppBar(
-                  title: Text("Renegociação de Empréstimos"),
+                  title: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text("Renegociação de Empréstimos"),
+                  ),
                   backgroundColor: Colors.green[300],
                 ),
                 body: SingleChildScrollView(
@@ -704,32 +707,44 @@ Widget buildCardInfo(
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        Container(
-          height: 45.0,
-          width: 45.0,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.all(
-              Radius.circular(60.0),
+        Flexible(
+          child: Align(
+            alignment: Alignment.center,
+            child: Container(
+              height: 45.0,
+              width: 45.0,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.all(
+                  Radius.circular(60.0),
+                ),
+              ),
+              child: Icon(
+                icon,
+                color: Colors.white,
+              ),
             ),
           ),
-          child: Icon(
-            icon,
-            size: 25.0,
-            color: Colors.white,
+        ),
+        Flexible(
+          child: Align(
+            alignment: Alignment.center,
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: alturaTela * 0.022,
+              ),
+            ),
           ),
         ),
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: alturaTela * 0.022,
-          ),
-        ),
-        FittedBox(
-          child: Text(
-            value,
-            style: TextStyle(
-              fontSize: alturaTela * 0.022,
+        Flexible(
+          child: Align(
+            alignment: Alignment.center,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: alturaTela * 0.022,
+              ),
             ),
           ),
         ),

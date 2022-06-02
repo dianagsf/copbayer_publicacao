@@ -48,6 +48,8 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
   final picker = ImagePicker();
   StorageService _storageService = StorageService();
 
+  bool anexoGaleria;
+
   //WEB
   Uint8List _imageWeb;
   FilePickerResult pickedFile;
@@ -112,6 +114,88 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
     });
   }
 
+  escolherGaleriaFoto(Function getImage, Function getImageWeb) {
+    Get.dialog(
+      AlertDialog(
+        title: Text("Escolha uma forma de enviar o comprovante:"),
+        content: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 100,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        anexoGaleria = true;
+                        getImageWeb();
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      primary: Colors.pink,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30.0),
+                        side: BorderSide(color: Colors.pink),
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Icon(
+                          Icons.image_outlined,
+                          size: 25,
+                        ),
+                        Text(
+                          "Galeria",
+                          style: TextStyle(color: Colors.white, fontSize: 16.0),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Container(
+                  height: 100,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        anexoGaleria = false;
+                        getImage();
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      primary: Colors.blue,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30.0),
+                        side: BorderSide(color: Colors.blue),
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Icon(
+                          Icons.camera_alt_outlined,
+                          size: 25,
+                        ),
+                        Text(
+                          "Câmera",
+                          style: TextStyle(color: Colors.white, fontSize: 16.0),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future getImage() async {
     final pickedFile =
         await picker.getImage(source: ImageSource.camera, imageQuality: 70);
@@ -125,6 +209,8 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
         }
       },
     );
+
+    Get.back();
   }
 
   handleDeleteImage() {
@@ -151,12 +237,16 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
     setState(
       () {
         if (pickedFile != null) {
-          _imageWeb = pickedFile.files.first.bytes;
+          _imageWeb = kIsWeb
+              ? pickedFile.files.single.bytes
+              : File(pickedFile.files.single.path).readAsBytesSync();
         } else {
           print('Nenhuma imagem selecionada.');
         }
       },
     );
+
+    if (!kIsWeb) Get.back();
   }
 
   handleDeleteImageWeb() {
@@ -223,7 +313,7 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
       );
     }
 
-    if (Responsive.isDesktop(context) || kIsWeb) {
+    if (Responsive.isDesktop(context) || kIsWeb || anexoGaleria) {
       if (_imageWeb == null) {
         Get.dialog(
           AlertDialog(
@@ -319,7 +409,7 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
                           }
                         }
 
-                        Responsive.isDesktop(context) || kIsWeb
+                        Responsive.isDesktop(context) || kIsWeb || anexoGaleria
                             ? _uploadComprovanteWeb()
                             : _uploadComprovante();
 
@@ -426,7 +516,10 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
           ? FechamentoFolhaPage()
           : Scaffold(
               appBar: AppBar(
-                title: Text("Pedido de Quitação"),
+                title: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text("Pedido de Quitação"),
+                ),
                 backgroundColor: Colors.green[300],
               ),
               body: SingleChildScrollView(
@@ -603,11 +696,13 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
                             alturaTela,
                             getImage,
                             getImageWeb,
+                            escolherGaleriaFoto,
                             handleDeleteImage,
                             handleDeleteImageWeb,
                             _image,
                             _imageWeb,
                             pickedFile,
+                            anexoGaleria,
                             context,
                           )
                         : SizedBox.shrink(),
@@ -660,32 +755,44 @@ Widget buildCardInfo(
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        Container(
-          height: 45.0,
-          width: 45.0,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.all(
-              Radius.circular(60.0),
+        Flexible(
+          child: Align(
+            alignment: Alignment.center,
+            child: Container(
+              height: 45.0,
+              width: 45.0,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.all(
+                  Radius.circular(60.0),
+                ),
+              ),
+              child: Icon(
+                icon,
+                color: Colors.white,
+              ),
             ),
           ),
-          child: Icon(
-            icon,
-            size: 25.0,
-            color: Colors.white,
+        ),
+        Flexible(
+          child: Align(
+            alignment: Alignment.center,
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: alturaTela * 0.022,
+              ),
+            ),
           ),
         ),
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: alturaTela * 0.022,
-          ),
-        ),
-        FittedBox(
-          child: Text(
-            value,
-            style: TextStyle(
-              fontSize: alturaTela * 0.022,
+        Flexible(
+          child: Align(
+            alignment: Alignment.center,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: alturaTela * 0.022,
+              ),
             ),
           ),
         ),
@@ -859,6 +966,7 @@ bool handleFechamentoFolha(List<FechamentoFolhaModel> fechamentoFolha) {
 Widget buildAnexoButton(
   Function getImage,
   Function getImageWeb,
+  Function escolherGaleriaFoto,
   double alturaTela,
   BuildContext context,
 ) {
@@ -868,8 +976,11 @@ Widget buildAnexoButton(
         ? EdgeInsets.symmetric(horizontal: alturaTela * 0.4)
         : EdgeInsets.zero,
     child: ElevatedButton.icon(
-      onPressed:
-          Responsive.isDesktop(context) || kIsWeb ? getImageWeb : getImage,
+      onPressed: () {
+        Responsive.isDesktop(context) || kIsWeb
+            ? getImageWeb()
+            : escolherGaleriaFoto(getImage, getImageWeb);
+      },
       style: ElevatedButton.styleFrom(
         primary: Colors.blue,
         shape: RoundedRectangleBorder(
@@ -894,11 +1005,13 @@ Widget buildAnexo(
   double alturaTela,
   Function getImage,
   Function getImageWeb,
+  Function escolherGaleriaFoto,
   Function handleDeleteImage,
   Function handleDeleteImageWeb,
   File _image,
   Uint8List _imageWeb,
   FilePickerResult pickedFile,
+  bool anexoGaleria,
   BuildContext context,
 ) {
   return Column(
@@ -906,7 +1019,13 @@ Widget buildAnexo(
       Container(
         margin: const EdgeInsets.only(left: 20),
         alignment: Alignment.centerLeft,
-        child: buildAnexoButton(getImage, getImageWeb, alturaTela, context),
+        child: buildAnexoButton(
+          getImage,
+          getImageWeb,
+          escolherGaleriaFoto,
+          alturaTela,
+          context,
+        ),
       ),
       _image != null || _imageWeb != null
           ? Padding(
@@ -920,15 +1039,16 @@ Widget buildAnexo(
                     margin: const EdgeInsets.only(bottom: 5),
                     constraints:
                         BoxConstraints(maxHeight: 60.0, maxWidth: 50.0),
-                    child: Responsive.isDesktop(context) || kIsWeb
-                        ? SizedBox.shrink()
-                        : Image.file(
-                            _image,
-                            fit: BoxFit.cover,
-                          ),
+                    child:
+                        Responsive.isDesktop(context) || kIsWeb || anexoGaleria
+                            ? SizedBox.shrink()
+                            : Image.file(
+                                _image,
+                                fit: BoxFit.cover,
+                              ),
                   ),
                   const SizedBox(width: 4.0),
-                  Responsive.isDesktop(context) || kIsWeb
+                  Responsive.isDesktop(context) || kIsWeb || anexoGaleria
                       ? Expanded(
                           child: Text(pickedFile != null
                               ? '${pickedFile.files.first.name}'
@@ -941,9 +1061,10 @@ Widget buildAnexo(
                       Icons.delete_forever_outlined,
                       color: Colors.red,
                     ),
-                    onPressed: Responsive.isDesktop(context) || kIsWeb
-                        ? handleDeleteImageWeb
-                        : handleDeleteImage,
+                    onPressed:
+                        Responsive.isDesktop(context) || kIsWeb || anexoGaleria
+                            ? handleDeleteImageWeb
+                            : handleDeleteImage,
                   ),
                 ],
               ),

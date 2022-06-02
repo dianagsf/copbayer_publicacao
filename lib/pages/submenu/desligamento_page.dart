@@ -7,6 +7,7 @@ import 'package:copbayer_app/controllers/saldo_capital_controller.dart';
 import 'package:copbayer_app/model/data_model.dart';
 import 'package:copbayer_app/model/fechamento_folha_model.dart';
 import 'package:copbayer_app/pages/contato_page.dart';
+import 'package:copbayer_app/pages/controle/fechamento_folha.dart';
 import 'package:copbayer_app/pages/controle/limite_solic_page.dart';
 import 'package:copbayer_app/pages/submenu/widgets/infos_devedor.dart';
 import 'package:copbayer_app/pages/submenu/widgets/solicitar_button.dart';
@@ -120,200 +121,205 @@ class _DesligamentoPageState extends State<DesligamentoPage> {
         dataController.getDatasDesligamento(widget.matricula);
       },
       builder: (_) {
-        return handleLimiteSolic(_.datasDesligamento)
-            ? LimiteSolicPage(operacao: "desligamento")
-            : Scaffold(
-                appBar: AppBar(
-                  title: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      "Desligamento do Cooperado",
-                      overflow: TextOverflow.visible,
-                      style: TextStyle(color: Colors.white),
+        return handleFechamentoFolha(fechamentoFolhaController.fechamentoFolha)
+            ? FechamentoFolhaPage()
+            : handleLimiteSolic(_.datasDesligamento)
+                ? LimiteSolicPage(operacao: "desligamento")
+                : Scaffold(
+                    appBar: AppBar(
+                      title: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          "Desligamento do Cooperado",
+                          overflow: TextOverflow.visible,
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                      backgroundColor: Colors.green[300],
                     ),
-                  ),
-                  backgroundColor: Colors.green[300],
-                ),
-                body: SingleChildScrollView(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                        horizontal: Responsive.isDesktop(context)
-                            ? alturaTela * 0.4
-                            : 20,
-                        vertical: 50),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        buildCardInfo(
-                          Icons.attach_money,
-                          "Saldo Capital Disponível",
-                          money.formatterMoney(saldoCapitalDisp),
-                          Colors.blue,
-                          alturaTela,
-                        ),
-                        GetX<SaldoDevedorController>(
-                          builder: (_) {
-                            return _.saldoDevedor.length < 1
-                                ? Center(
-                                    child: CircularProgressIndicator(
-                                      backgroundColor: Colors.white,
-                                    ),
-                                  )
-                                : buildCardInfo(
-                                    Icons.money_off,
-                                    "Saldo Devedor",
-                                    _.saldoDevedor[0].devedor != null
-                                        ? money.formatterMoney(double.parse(_
-                                            .saldoDevedor[0].devedor
-                                            .toString()))
-                                        : 'R\$ 0,00',
-                                    Colors.red[400],
-                                    alturaTela,
-                                  );
-                          },
-                        ),
-                        const SizedBox(height: 20),
-                        Card(
-                          elevation: 5,
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(20),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  devedor > saldo
-                                      ? "Total a pagar"
-                                      : "Total a receber",
-                                  style: TextStyle(
-                                    fontSize: alturaTela * 0.022,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  money.formatterMoney(total),
-                                  style: TextStyle(
-                                    fontSize: alturaTela * 0.022,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
+                    body: SingleChildScrollView(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: Responsive.isDesktop(context)
+                                ? alturaTela * 0.4
+                                : 20,
+                            vertical: 50),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            buildCardInfo(
+                              Icons.attach_money,
+                              "Saldo Capital Disponível",
+                              money.formatterMoney(saldoCapitalDisp),
+                              Colors.blue,
+                              alturaTela,
                             ),
-                          ),
-                        ),
-                        const SizedBox(height: 40),
-                        devedor > saldo
-                            ? Column(
-                                children: [
-                                  InfosDevedor(
-                                    matricula: widget.matricula,
-                                    protocolo: protocolo,
-                                    quitacaoPage: false,
-                                    saldoDevedor: money.formatterMoney(total),
-                                    valor: money.formatterMoney(total),
-                                    enviarComprovante: enviarComprovante,
-                                  ),
-                                  Container(
-                                    margin: const EdgeInsets.only(
-                                        left: 15, right: 10),
-                                    alignment: Alignment.centerLeft,
-                                    child: Text(
-                                      "ou entre em contato com a Copbayer para o pagamento da diferença:",
-                                      style: TextStyle(
-                                        fontSize: alturaTela * 0.022,
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    margin: const EdgeInsets.only(
-                                      left: 15,
-                                      right: 10,
-                                      top: 10,
-                                      bottom: 30,
-                                    ),
-                                    alignment: Alignment.bottomLeft,
-                                    child: ElevatedButton.icon(
-                                      label: Text('Fale Conosco'),
-                                      icon: Icon(Icons.phone),
-                                      style: ElevatedButton.styleFrom(
-                                        primary: Colors.blueAccent,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(20),
+                            GetX<SaldoDevedorController>(
+                              builder: (_) {
+                                return _.saldoDevedor.length < 1
+                                    ? Center(
+                                        child: CircularProgressIndicator(
+                                          backgroundColor: Colors.white,
                                         ),
-                                      ),
-                                      onPressed: () {
-                                        Get.to(() => ContatoPage());
-                                      },
-                                    ),
-                                  )
-                                ],
-                              )
-                            : SizedBox.shrink(),
-                        Text(
-                          "Informe o motivo do desligamento",
-                          style: TextStyle(fontSize: alturaTela * 0.025),
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(
-                          height: alturaTela * 0.025,
-                        ),
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 40, vertical: 20),
-                          child: TextField(
-                            controller: observacaoController,
-                            style: TextStyle(fontSize: alturaTela * 0.022),
-                            decoration: InputDecoration(
-                                labelText: "Motivo do desligamento"),
-                            keyboardType: TextInputType.multiline,
-                          ),
-                        ),
-                        const SizedBox(height: 30),
-                        devedor < saldo
-                            ? Container(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 20),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                      )
+                                    : buildCardInfo(
+                                        Icons.money_off,
+                                        "Saldo Devedor",
+                                        _.saldoDevedor[0].devedor != null
+                                            ? money.formatterMoney(double.parse(
+                                                _.saldoDevedor[0].devedor
+                                                    .toString()))
+                                            : 'R\$ 0,00',
+                                        Colors.red[400],
+                                        alturaTela,
+                                      );
+                              },
+                            ),
+                            const SizedBox(height: 20),
+                            Card(
+                              elevation: 5,
+                              child: Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(20),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      "Aviso importante:",
+                                      devedor > saldo
+                                          ? "Total a pagar"
+                                          : "Total a receber",
                                       style: TextStyle(
-                                        fontSize: 16,
+                                        fontSize: alturaTela * 0.022,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                    const SizedBox(height: 10),
                                     Text(
-                                      "Em casos de devolução do capital: sua solicitação será analisada e se aprovada, a devolução ocorrerá no dia 10 do mês seguinte.",
+                                      money.formatterMoney(total),
                                       style: TextStyle(
-                                        fontSize: 16,
+                                        fontSize: alturaTela * 0.022,
+                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                   ],
                                 ),
-                              )
-                            : SizedBox.shrink(),
-                        SizedBox(
-                          height: alturaTela * 0.11, //90,
+                              ),
+                            ),
+                            const SizedBox(height: 40),
+                            devedor > saldo
+                                ? Column(
+                                    children: [
+                                      InfosDevedor(
+                                        matricula: widget.matricula,
+                                        protocolo: protocolo,
+                                        quitacaoPage: false,
+                                        saldoDevedor:
+                                            money.formatterMoney(total),
+                                        valor: money.formatterMoney(total),
+                                        enviarComprovante: enviarComprovante,
+                                      ),
+                                      Container(
+                                        margin: const EdgeInsets.only(
+                                            left: 15, right: 10),
+                                        alignment: Alignment.centerLeft,
+                                        child: Text(
+                                          "ou entre em contato com a Copbayer para o pagamento da diferença:",
+                                          style: TextStyle(
+                                            fontSize: alturaTela * 0.022,
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        margin: const EdgeInsets.only(
+                                          left: 15,
+                                          right: 10,
+                                          top: 10,
+                                          bottom: 30,
+                                        ),
+                                        alignment: Alignment.bottomLeft,
+                                        child: ElevatedButton.icon(
+                                          label: Text('Fale Conosco'),
+                                          icon: Icon(Icons.phone),
+                                          style: ElevatedButton.styleFrom(
+                                            primary: Colors.blueAccent,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                            ),
+                                          ),
+                                          onPressed: () {
+                                            Get.to(() => ContatoPage());
+                                          },
+                                        ),
+                                      )
+                                    ],
+                                  )
+                                : SizedBox.shrink(),
+                            Text(
+                              "Informe o motivo do desligamento",
+                              style: TextStyle(fontSize: alturaTela * 0.025),
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(
+                              height: alturaTela * 0.025,
+                            ),
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 40, vertical: 20),
+                              child: TextField(
+                                controller: observacaoController,
+                                style: TextStyle(fontSize: alturaTela * 0.022),
+                                decoration: InputDecoration(
+                                    labelText: "Motivo do desligamento"),
+                                keyboardType: TextInputType.multiline,
+                              ),
+                            ),
+                            const SizedBox(height: 30),
+                            devedor < saldo
+                                ? Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 20),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Aviso importante:",
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 10),
+                                        Text(
+                                          "Em casos de devolução do capital: sua solicitação será analisada e se aprovada, a devolução ocorrerá no dia 10 do mês seguinte.",
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : SizedBox.shrink(),
+                            SizedBox(
+                              height: alturaTela * 0.11, //90,
+                            ),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: Responsive.isDesktop(context)
+                                    ? alturaTela * 0.07
+                                    : 50,
+                              ),
+                              child: SolicitarButton(
+                                handleSolicitar: handleDesligamento,
+                                matricula: widget.matricula,
+                              ),
+                            ),
+                          ],
                         ),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: Responsive.isDesktop(context)
-                                ? alturaTela * 0.07
-                                : 50,
-                          ),
-                          child: SolicitarButton(
-                            handleSolicitar: handleDesligamento,
-                            matricula: widget.matricula,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
-              );
+                  );
       },
     );
   }
@@ -350,31 +356,46 @@ Widget buildCardInfo(
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        Container(
-          height: 45.0,
-          width: 45.0,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.all(
-              Radius.circular(60.0),
+        Flexible(
+          child: Align(
+            alignment: Alignment.center,
+            child: Container(
+              height: 45.0,
+              width: 45.0,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.all(
+                  Radius.circular(60.0),
+                ),
+              ),
+              child: Icon(
+                icon,
+                color: Colors.white,
+              ),
             ),
           ),
-          child: Icon(
-            icon,
-            size: 25.0,
-            color: Colors.white,
+        ),
+        Flexible(
+          child: Align(
+            alignment: Alignment.center,
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: alturaTela * 0.022,
+              ),
+            ),
           ),
         ),
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: alturaTela * 0.022,
-          ),
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: alturaTela * 0.022,
+        const SizedBox(width: 8),
+        Flexible(
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: alturaTela * 0.022,
+              ),
+            ),
           ),
         ),
       ],
@@ -434,7 +455,19 @@ Widget userInfos(IconData icon, String title, String data, BuildContext context,
 }
 
 bool handleFechamentoFolha(List<FechamentoFolhaModel> fechamentoFolha) {
-  if (fechamentoFolha[0].fimmes == 1) {
+  var dataHoje = DateTime.now();
+  var dataLimite = DateTime.parse(fechamentoFolha[0].datafechafolha)
+      .subtract(Duration(days: 2));
+
+  print("DATA LIMITE = $dataLimite");
+
+  print(
+      "DATA FECHA FOLHA = ${DateTime.parse(fechamentoFolha[0].datafechafolha)}");
+
+  if ((dataHoje.isAfter(dataLimite) &&
+          dataHoje
+              .isBefore(DateTime.parse(fechamentoFolha[0].datafechafolha))) ||
+      fechamentoFolha[0].fimmes == 1) {
     return true;
   }
 
