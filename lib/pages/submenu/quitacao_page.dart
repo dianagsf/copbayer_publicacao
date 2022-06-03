@@ -48,7 +48,7 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
   final picker = ImagePicker();
   StorageService _storageService = StorageService();
 
-  bool anexoGaleria;
+  bool anexoGaleria = false;
 
   //WEB
   Uint8List _imageWeb;
@@ -313,145 +313,253 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
       );
     }
 
-    if (Responsive.isDesktop(context) || kIsWeb || anexoGaleria) {
-      if (_imageWeb == null) {
+    if ((selectedRadio == 2 ||
+        total > double.parse(saldoCapitalController.saldoCapital[0].saldo))) {
+      if (Responsive.isDesktop(context) || kIsWeb || anexoGaleria) {
+        if (_imageWeb == null) {
+          Get.dialog(
+            AlertDialog(
+              title: Text("Atenção!"),
+              content: Text(
+                "Adicione o comprovante.",
+                style: TextStyle(fontSize: 18),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Get.back(),
+                  child: Text(
+                    'OK',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                )
+              ],
+            ),
+          );
+        }
+      } else {
+        if (_image == null) {
+          Get.dialog(
+            AlertDialog(
+              title: Text("Atenção!"),
+              content: Text(
+                "Você deve anexar o comprovante de quitação.",
+                style: TextStyle(fontSize: 18),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Get.back(),
+                  child: Text("OK"),
+                ),
+              ],
+            ),
+          );
+        }
+      }
+    }
+
+    if (selectedRadio != 0 && selectedEmp.length != 0) {
+      if ((selectedRadio == 2 ||
+              total >
+                  double.parse(saldoCapitalController.saldoCapital[0].saldo)) &&
+          (_image != null || _imageWeb != null)) {
         Get.dialog(
           AlertDialog(
-            title: Text("Atenção!"),
-            content: Text(
-              "Adicione o comprovante.",
-              style: TextStyle(fontSize: 18),
+            title: Text("Confirme sua senha"),
+            content: TextField(
+              controller: senhaController,
+              keyboardType: TextInputType.number,
+              obscureText: true,
+              decoration: InputDecoration(
+                prefixIcon: Icon(Icons.lock_outline),
+                border: OutlineInputBorder(),
+              ),
             ),
             actions: [
-              TextButton(
-                onPressed: () => Get.back(),
-                child: Text(
-                  'OK',
-                  style: TextStyle(fontSize: 18),
-                ),
+              FutureBuilder(
+                future: senhaRepository.getSenha(widget.matricula),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return TextButton(
+                      onPressed: () {
+                        if (senhaController.text
+                                .compareTo(snapshot.data[0].senha) ==
+                            0) {
+                          Future.delayed(Duration(seconds: 20));
+                          //SALVA SOLICITAÇÃO
+
+                          for (int i = 0; i < selectedEmp.length; i++) {
+                            if (i == 0) {
+                              quitacaoRepository.savePedidoQuitacao({
+                                "numero": protocolo,
+                                "data":
+                                    DateTime.now().toString().substring(0, 19),
+                                "valor":
+                                    selectedRadio == 1 ? totalQuitacao : total,
+                                "matricula": widget.matricula,
+                                "usarCapital": selectedRadio == 1 ? 'S' : 'N',
+                                "emprestimo": selectedEmp[i].numero,
+                                "unico": 1,
+                              });
+                            } else {
+                              quitacaoRepository.savePedidoQuitacao({
+                                "numero": protocolo,
+                                "data":
+                                    DateTime.now().toString().substring(0, 19),
+                                "valor":
+                                    selectedRadio == 1 ? totalQuitacao : total,
+                                "matricula": widget.matricula,
+                                "usarCapital": selectedRadio == 1 ? 'S' : 'N',
+                                "emprestimo": selectedEmp[i].numero,
+                              });
+                            }
+                          }
+
+                          Responsive.isDesktop(context) ||
+                                  kIsWeb ||
+                                  anexoGaleria
+                              ? _uploadComprovanteWeb()
+                              : _uploadComprovante();
+
+                          if (!Responsive.isDesktop(context)) Get.back();
+                          Get.back();
+                          Get.back();
+                          Get.snackbar(
+                            "Sua solicitação foi enviada com sucesso!",
+                            "Em breve entraremos em contato.",
+                            backgroundColor: Colors.green,
+                            colorText: Colors.white,
+                            padding: EdgeInsets.all(30),
+                            snackPosition: SnackPosition.BOTTOM,
+                            duration: Duration(seconds: 4),
+                          );
+                        } else {
+                          Get.back();
+
+                          Get.snackbar(
+                            "Senha incorreta!",
+                            "Tente novamente.",
+                            backgroundColor: Colors.red,
+                            colorText: Colors.white,
+                            padding: EdgeInsets.all(30),
+                            snackPosition: SnackPosition.BOTTOM,
+                            duration: Duration(seconds: 4),
+                          );
+
+                          setState(() {
+                            senhaController.text = '';
+                          });
+                        }
+                      },
+                      child: Text("CONFIRMAR"),
+                    );
+                  }
+                  return Container();
+                },
+              )
+            ],
+          ),
+        );
+      } else if (selectedRadio == 1 &&
+          (total <
+              double.parse(saldoCapitalController.saldoCapital[0].saldo))) {
+        Get.dialog(
+          AlertDialog(
+            title: Text("Confirme sua senha"),
+            content: TextField(
+              controller: senhaController,
+              keyboardType: TextInputType.number,
+              obscureText: true,
+              decoration: InputDecoration(
+                prefixIcon: Icon(Icons.lock_outline),
+                border: OutlineInputBorder(),
+              ),
+            ),
+            actions: [
+              FutureBuilder(
+                future: senhaRepository.getSenha(widget.matricula),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return TextButton(
+                      onPressed: () {
+                        if (senhaController.text
+                                .compareTo(snapshot.data[0].senha) ==
+                            0) {
+                          Future.delayed(Duration(seconds: 20));
+                          //SALVA SOLICITAÇÃO
+
+                          for (int i = 0; i < selectedEmp.length; i++) {
+                            if (i == 0) {
+                              quitacaoRepository.savePedidoQuitacao({
+                                "numero": protocolo,
+                                "data":
+                                    DateTime.now().toString().substring(0, 19),
+                                "valor":
+                                    selectedRadio == 1 ? totalQuitacao : total,
+                                "matricula": widget.matricula,
+                                "usarCapital": selectedRadio == 1 ? 'S' : 'N',
+                                "emprestimo": selectedEmp[i].numero,
+                                "unico": 1,
+                              });
+                            } else {
+                              quitacaoRepository.savePedidoQuitacao({
+                                "numero": protocolo,
+                                "data":
+                                    DateTime.now().toString().substring(0, 19),
+                                "valor":
+                                    selectedRadio == 1 ? totalQuitacao : total,
+                                "matricula": widget.matricula,
+                                "usarCapital": selectedRadio == 1 ? 'S' : 'N',
+                                "emprestimo": selectedEmp[i].numero,
+                              });
+                            }
+                          }
+
+                          /*Responsive.isDesktop(context) ||
+                                  kIsWeb ||
+                                  anexoGaleria
+                              ? _uploadComprovanteWeb()
+                              : _uploadComprovante();*/
+
+                          if (!Responsive.isDesktop(context)) Get.back();
+                          Get.back();
+                          Get.back();
+                          Get.snackbar(
+                            "Sua solicitação foi enviada com sucesso!",
+                            "Em breve entraremos em contato.",
+                            backgroundColor: Colors.green,
+                            colorText: Colors.white,
+                            padding: EdgeInsets.all(30),
+                            snackPosition: SnackPosition.BOTTOM,
+                            duration: Duration(seconds: 4),
+                          );
+                        } else {
+                          Get.back();
+
+                          Get.snackbar(
+                            "Senha incorreta!",
+                            "Tente novamente.",
+                            backgroundColor: Colors.red,
+                            colorText: Colors.white,
+                            padding: EdgeInsets.all(30),
+                            snackPosition: SnackPosition.BOTTOM,
+                            duration: Duration(seconds: 4),
+                          );
+
+                          setState(() {
+                            senhaController.text = '';
+                          });
+                        }
+                      },
+                      child: Text("CONFIRMAR"),
+                    );
+                  }
+                  return Container();
+                },
               )
             ],
           ),
         );
       }
-    } else {
-      if (_image == null) {
-        Get.dialog(
-          AlertDialog(
-            title: Text("Atenção!"),
-            content: Text(
-              "Você deve anexar o comprovante de quitação.",
-              style: TextStyle(fontSize: 18),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Get.back(),
-                child: Text("OK"),
-              ),
-            ],
-          ),
-        );
-      }
-    }
-
-    if (selectedRadio != 0 &&
-        selectedEmp.length != 0 &&
-        (_image != null || _imageWeb != null)) {
-      Get.dialog(
-        AlertDialog(
-          title: Text("Confirme sua senha"),
-          content: TextField(
-            controller: senhaController,
-            keyboardType: TextInputType.number,
-            obscureText: true,
-            decoration: InputDecoration(
-              prefixIcon: Icon(Icons.lock_outline),
-              border: OutlineInputBorder(),
-            ),
-          ),
-          actions: [
-            FutureBuilder(
-              future: senhaRepository.getSenha(widget.matricula),
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  return TextButton(
-                    onPressed: () {
-                      if (senhaController.text
-                              .compareTo(snapshot.data[0].senha) ==
-                          0) {
-                        Future.delayed(Duration(seconds: 20));
-                        //SALVA SOLICITAÇÃO
-
-                        for (int i = 0; i < selectedEmp.length; i++) {
-                          if (i == 0) {
-                            quitacaoRepository.savePedidoQuitacao({
-                              "numero": protocolo,
-                              "data":
-                                  DateTime.now().toString().substring(0, 19),
-                              "valor":
-                                  selectedRadio == 1 ? totalQuitacao : total,
-                              "matricula": widget.matricula,
-                              "usarCapital": selectedRadio == 1 ? 'S' : 'N',
-                              "emprestimo": selectedEmp[i].numero,
-                              "unico": 1,
-                            });
-                          } else {
-                            quitacaoRepository.savePedidoQuitacao({
-                              "numero": protocolo,
-                              "data":
-                                  DateTime.now().toString().substring(0, 19),
-                              "valor":
-                                  selectedRadio == 1 ? totalQuitacao : total,
-                              "matricula": widget.matricula,
-                              "usarCapital": selectedRadio == 1 ? 'S' : 'N',
-                              "emprestimo": selectedEmp[i].numero,
-                            });
-                          }
-                        }
-
-                        Responsive.isDesktop(context) || kIsWeb || anexoGaleria
-                            ? _uploadComprovanteWeb()
-                            : _uploadComprovante();
-
-                        if (!Responsive.isDesktop(context)) Get.back();
-                        Get.back();
-                        Get.back();
-                        Get.snackbar(
-                          "Sua solicitação foi enviada com sucesso!",
-                          "Em breve entraremos em contato.",
-                          backgroundColor: Colors.green,
-                          colorText: Colors.white,
-                          padding: EdgeInsets.all(30),
-                          snackPosition: SnackPosition.BOTTOM,
-                          duration: Duration(seconds: 4),
-                        );
-                      } else {
-                        Get.back();
-
-                        Get.snackbar(
-                          "Senha incorreta!",
-                          "Tente novamente.",
-                          backgroundColor: Colors.red,
-                          colorText: Colors.white,
-                          padding: EdgeInsets.all(30),
-                          snackPosition: SnackPosition.BOTTOM,
-                          duration: Duration(seconds: 4),
-                        );
-
-                        setState(() {
-                          senhaController.text = '';
-                        });
-                      }
-                    },
-                    child: Text("CONFIRMAR"),
-                  );
-                }
-                return Container();
-              },
-            )
-          ],
-        ),
-      );
     }
   }
 
@@ -460,11 +568,15 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
         double.parse(saldoCapitalController.saldoCapital[0].saldo) -
             deixarSaldo; // 48,00
 
+    print("total = $total");
+    print("saldo = $saldoCapital");
+
     if (total > saldoCapital) {
       totalQuitacao = total - saldoCapital;
       infosDevedor = true;
     } else {
       totalQuitacao = saldoCapital - total;
+      infosDevedor = false;
     }
 
     return money.formatterMoney(totalQuitacao);
