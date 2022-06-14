@@ -568,9 +568,6 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
         double.parse(saldoCapitalController.saldoCapital[0].saldo) -
             deixarSaldo; // 48,00
 
-    print("total = $total");
-    print("saldo = $saldoCapital");
-
     if (total > saldoCapital) {
       totalQuitacao = total - saldoCapital;
       infosDevedor = true;
