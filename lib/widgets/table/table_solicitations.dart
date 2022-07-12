@@ -83,7 +83,7 @@ class _SolicitationsTableState extends State<SolicitationsTable> {
         Divider(),
         const SizedBox(height: 20),
         Scrollbar(
-          isAlwaysShown: true,
+          thumbVisibility: true,
           thickness: 3,
           controller: _scrollController,
           radius: Radius.circular(40),

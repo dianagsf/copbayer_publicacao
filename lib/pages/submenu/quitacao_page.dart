@@ -61,6 +61,9 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
   bool isDevedor = false;
   double totalQuitacao = 0.0;
   bool infosDevedor = false;
+  double valQuitacao = 0.0;
+  double capitalRestante = 0.0;
+  double valorPagar = 0.0;
 
   double saldoCapitalDisp = 0.0;
   double deixarSaldo = 0.0;
@@ -393,23 +396,31 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
                                 "numero": protocolo,
                                 "data":
                                     DateTime.now().toString().substring(0, 19),
-                                "valor":
-                                    selectedRadio == 1 ? totalQuitacao : total,
+                                "valor": total,
                                 "matricula": widget.matricula,
                                 "usarCapital": selectedRadio == 1 ? 'S' : 'N',
                                 "emprestimo": selectedEmp[i].numero,
                                 "unico": 1,
+                                "valorPagar":
+                                    selectedRadio == 1 ? valorPagar : total,
+                                "capitalDisponivel": selectedRadio == 1
+                                    ? capitalRestante
+                                    : saldoCapitalDisp,
                               });
                             } else {
                               quitacaoRepository.savePedidoQuitacao({
                                 "numero": protocolo,
                                 "data":
                                     DateTime.now().toString().substring(0, 19),
-                                "valor":
-                                    selectedRadio == 1 ? totalQuitacao : total,
+                                "valor": total,
                                 "matricula": widget.matricula,
                                 "usarCapital": selectedRadio == 1 ? 'S' : 'N',
                                 "emprestimo": selectedEmp[i].numero,
+                                "valorPagar":
+                                    selectedRadio == 1 ? valorPagar : total,
+                                "capitalDisponivel": selectedRadio == 1
+                                    ? capitalRestante
+                                    : saldoCapitalDisp,
                               });
                             }
                           }
@@ -493,23 +504,31 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
                                 "numero": protocolo,
                                 "data":
                                     DateTime.now().toString().substring(0, 19),
-                                "valor":
-                                    selectedRadio == 1 ? totalQuitacao : total,
+                                "valor": total,
                                 "matricula": widget.matricula,
                                 "usarCapital": selectedRadio == 1 ? 'S' : 'N',
                                 "emprestimo": selectedEmp[i].numero,
                                 "unico": 1,
+                                "valorPagar":
+                                    selectedRadio == 1 ? valorPagar : total,
+                                "capitalDisponivel": selectedRadio == 1
+                                    ? capitalRestante
+                                    : saldoCapitalDisp,
                               });
                             } else {
                               quitacaoRepository.savePedidoQuitacao({
                                 "numero": protocolo,
                                 "data":
                                     DateTime.now().toString().substring(0, 19),
-                                "valor":
-                                    selectedRadio == 1 ? totalQuitacao : total,
+                                "valor": total,
                                 "matricula": widget.matricula,
                                 "usarCapital": selectedRadio == 1 ? 'S' : 'N',
                                 "emprestimo": selectedEmp[i].numero,
+                                "valorPagar":
+                                    selectedRadio == 1 ? valorPagar : total,
+                                "capitalDisponivel": selectedRadio == 1
+                                    ? capitalRestante
+                                    : saldoCapitalDisp,
                               });
                             }
                           }
@@ -571,16 +590,19 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
     if (total > saldoCapital) {
       totalQuitacao = total - saldoCapital;
       infosDevedor = true;
+      capitalRestante = 0.0;
+      valorPagar = totalQuitacao;
     } else {
       totalQuitacao = saldoCapital - total;
       infosDevedor = false;
+      capitalRestante = totalQuitacao;
+      valorPagar = 0.0;
     }
 
     return money.formatterMoney(totalQuitacao);
   }
 
   handleChangeCheckBox(bool value, PropostaModel prop) async {
-    var valQuitacao = double.parse(prop.valorQuitacao.toString());
     List<int> pedidosEmAnalise = [];
     pedidoQuitacaoController.pedidosQuitacao.forEach((pedidoEmAnalise) {
       pedidosEmAnalise.add(pedidoEmAnalise.emprestimo);
@@ -604,6 +626,7 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
       );
     } else {
       setState(() {
+        valQuitacao = double.parse(prop.valorQuitacao.toString());
         if (value) {
           selectedEmp.add(prop);
           total = total + valQuitacao;
@@ -613,6 +636,8 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
         }
       });
     }
+
+    print('total = $total');
   }
 
   @override
@@ -646,7 +671,7 @@ class _QuitacaoPageState extends State<QuitacaoPage> {
                       ),
                     ),
                     Scrollbar(
-                      isAlwaysShown: true,
+                      thumbVisibility: true,
                       thickness: 3,
                       controller: _scrollController,
                       radius: Radius.circular(40),

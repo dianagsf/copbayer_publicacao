@@ -42,9 +42,9 @@
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Permissão de acesso à galeria.</string>
+	<string>Para enviar os documentos necessários à sua solicitação, é necessário acesso à galeria do dispositivo.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Este app requer acesso à camera.</string>
+	<string>Para tirar fotos dos documentos necessários à solicitação, é necessário acesso à câmera do seu dispositivo.</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
   		<string>https</string>

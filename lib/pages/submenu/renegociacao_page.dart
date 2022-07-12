@@ -442,7 +442,7 @@ class _RenegociacaoPageState extends State<RenegociacaoPage> {
                         ),
                       ),
                       Scrollbar(
-                        isAlwaysShown: true,
+                        thumbVisibility: true,
                         thickness: 3,
                         controller: _scrollController,
                         radius: Radius.circular(40),

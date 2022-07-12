@@ -4,14 +4,13 @@ import 'package:copbayer_app/pages/controle/versao_page.dart';
 import 'package:copbayer_app/utils/responsive.dart';
 import 'package:copbayer_app/widgets/send_email.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_masked_text/flutter_masked_text.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/foundation.dart' show kIsWeb; // verifica se tá na WEB
 
 //import 'package:amplify_core/amplify_core.dart';
-import 'package:amplify_flutter/amplify.dart';
+import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:copbayer_app/amplifyconfiguration.dart';
 import 'package:amplify_storage_s3/amplify_storage_s3.dart';
 import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';

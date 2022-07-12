@@ -7,63 +7,105 @@ packages:
       name: amplify_analytics_plugin_interface
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.2.10"
+    version: "0.5.1"
   amplify_api_plugin_interface:
     dependency: transitive
     description:
       name: amplify_api_plugin_interface
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.2.10"
+    version: "0.5.1"
   amplify_auth_cognito:
     dependency: "direct overridden"
     description:
       name: amplify_auth_cognito
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.2.10"
+    version: "0.5.1"
+  amplify_auth_cognito_android:
+    dependency: transitive
+    description:
+      name: amplify_auth_cognito_android
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.5.1"
+  amplify_auth_cognito_ios:
+    dependency: transitive
+    description:
+      name: amplify_auth_cognito_ios
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.5.1"
   amplify_auth_plugin_interface:
     dependency: "direct overridden"
     description:
       name: amplify_auth_plugin_interface
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.2.10"
+    version: "0.5.1"
   amplify_core:
     dependency: transitive
     description:
       name: amplify_core
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.2.10"
+    version: "0.5.1"
   amplify_datastore_plugin_interface:
     dependency: transitive
     description:
       name: amplify_datastore_plugin_interface
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.2.10"
+    version: "0.5.1"
   amplify_flutter:
     dependency: "direct overridden"
     description:
       name: amplify_flutter
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.2.10"
+    version: "0.5.1"
+  amplify_flutter_android:
+    dependency: transitive
+    description:
+      name: amplify_flutter_android
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.5.1"
+  amplify_flutter_ios:
+    dependency: transitive
+    description:
+      name: amplify_flutter_ios
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.5.1"
   amplify_storage_plugin_interface:
     dependency: transitive
     description:
       name: amplify_storage_plugin_interface
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.2.10"
+    version: "0.5.1"
   amplify_storage_s3:
     dependency: "direct overridden"
     description:
       name: amplify_storage_s3
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.2.10"
+    version: "0.5.1"
+  amplify_storage_s3_android:
+    dependency: transitive
+    description:
+      name: amplify_storage_s3_android
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.5.1"
+  amplify_storage_s3_ios:
+    dependency: transitive
+    description:
+      name: amplify_storage_s3_ios
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.5.1"
   archive:
     dependency: transitive
     description:
@@ -84,7 +126,7 @@ packages:
       name: async
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.5.0"
+    version: "2.8.2"
   boolean_selector:
     dependency: transitive
     description:
@@ -105,14 +147,14 @@ packages:
       name: characters
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.1.0"
+    version: "1.2.0"
   charcode:
     dependency: transitive
     description:
       name: charcode
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.2.0"
+    version: "1.3.1"
   clock:
     dependency: transitive
     description:
@@ -126,7 +168,7 @@ packages:
       name: collection
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.15.0"
+    version: "1.16.0"
   cross_file:
     dependency: transitive
     description:
@@ -182,7 +224,7 @@ packages:
       name: fake_async
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.2.0"
+    version: "1.3.0"
   ffi:
     dependency: transitive
     description:
@@ -235,13 +277,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.8.0"
-  flutter_money_formatter:
-    dependency: "direct overridden"
-    description:
-      name: flutter_money_formatter
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.8.3"
   flutter_plugin_android_lifecycle:
     dependency: transitive
     description:
@@ -328,7 +363,14 @@ packages:
       name: js
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.6.3"
+    version: "0.6.4"
+  json_annotation:
+    dependency: transitive
+    description:
+      name: json_annotation
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "4.5.0"
   logging:
     dependency: transitive
     description:
@@ -349,7 +391,14 @@ packages:
       name: matcher
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.12.10"
+    version: "0.12.11"
+  material_color_utilities:
+    dependency: transitive
+    description:
+      name: material_color_utilities
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.4"
   material_design_icons_flutter:
     dependency: "direct overridden"
     description:
@@ -363,7 +412,7 @@ packages:
       name: meta
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.3.0"
+    version: "1.7.0"
   mime:
     dependency: transitive
     description:
@@ -371,6 +420,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.9.7"
+  money_formatter:
+    dependency: "direct overridden"
+    description:
+      name: money_formatter
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.0.3"
   package_info:
     dependency: "direct overridden"
     description:
@@ -384,7 +440,7 @@ packages:
       name: path
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.8.0"
+    version: "1.8.1"
   pedantic:
     dependency: transitive
     description:
@@ -424,7 +480,7 @@ packages:
       name: source_span
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.8.1"
+    version: "1.8.2"
   stack_trace:
     dependency: transitive
     description:
@@ -459,7 +515,7 @@ packages:
       name: test_api
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.2.19"
+    version: "0.4.9"
   typed_data:
     dependency: transitive
     description:
@@ -522,7 +578,7 @@ packages:
       name: vector_math
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.1.0"
+    version: "2.1.2"
   xml:
     dependency: transitive
     description:
@@ -538,5 +594,5 @@ packages:
     source: hosted
     version: "3.1.0"
 sdks:
-  dart: ">=2.12.0 <3.0.0"
+  dart: ">=2.17.0-0 <3.0.0"
   flutter: ">=2.0.0"

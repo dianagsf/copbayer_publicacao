@@ -8,6 +8,7 @@ void main() async {
     GetMaterialApp(
       localizationsDelegates: [
         GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate
       ],
       // Linguagem calendário data

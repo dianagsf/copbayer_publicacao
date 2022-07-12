@@ -4,7 +4,7 @@ class CustomDio {
   var _dio;
 
   //http://54.207.211.41:3000
-  //http://192.168.0.104:3000
+  //http://192.168.0.106:3000
 
   CustomDio() {
     _dio = Dio(
